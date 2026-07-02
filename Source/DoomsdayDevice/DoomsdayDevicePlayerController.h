@@ -8,6 +8,8 @@
 
 class UInputMappingContext;
 class UUserWidget;
+class UInteractionComponent;
+class UInputAction;
 
 /**
  *  Simple first person Player Controller
@@ -46,6 +48,10 @@ protected:
 	UPROPERTY(EditAnywhere, Config, Category = "Input|Touch Controls")
 	bool bForceTouchControls = false;
 
+	/** Jump Input Action */
+	UPROPERTY(EditAnywhere, Category = "Input")
+	UInputAction* InteractionAction;
+
 	/** Gameplay initialization */
 	virtual void BeginPlay() override;
 
@@ -54,4 +60,18 @@ protected:
 
 	/** Returns true if the player should use UMG touch controls */
 	bool ShouldUseTouchControls() const;
+
+	virtual void PlayerTick(float DeltaTime) override;
+
+private:
+	TArray<TWeakObjectPtr<UInteractionComponent>> PossibleInteractions;
+	TWeakObjectPtr<UInteractionComponent> ActiveInteraction;
+
+	void OnInteractionEnter(const TWeakObjectPtr<UInteractionComponent> Interaction);
+	void OnInteractionExit(const TWeakObjectPtr<UInteractionComponent> Interaction);
+
+	void ActivateInteraction(const TWeakObjectPtr<UInteractionComponent> Interaction);
+	void DeactivateInteraction();
+
+	void OnInteractionUsed();
 };

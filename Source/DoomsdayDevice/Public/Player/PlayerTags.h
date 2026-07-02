@@ -1,0 +1,15 @@
+﻿// Copyright https://github.com/MothCocoon/FlowGame/graphs/contributors
+#pragma once
+
+#include "NativeGameplayTags.h"
+
+namespace PlayerTags
+{
+	DOOMSDAYDEVICE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_CameraPitch);
+	DOOMSDAYDEVICE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_CameraYaw);
+	DOOMSDAYDEVICE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Interaction);
+	DOOMSDAYDEVICE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_MoveForward);
+	DOOMSDAYDEVICE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_MoveRight);
+	
+	DOOMSDAYDEVICE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Pawn);
+};

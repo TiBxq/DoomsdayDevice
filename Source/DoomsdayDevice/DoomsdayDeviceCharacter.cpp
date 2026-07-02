@@ -10,6 +10,9 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "DoomsdayDevice.h"
 
+#include "FlowComponent.h"
+#include "Player/PlayerTags.h"
+
 ADoomsdayDeviceCharacter::ADoomsdayDeviceCharacter()
 {
 	// Set size for collision capsule
@@ -42,6 +45,9 @@ ADoomsdayDeviceCharacter::ADoomsdayDeviceCharacter()
 	// Configure character movement
 	GetCharacterMovement()->BrakingDecelerationFalling = 1500.0f;
 	GetCharacterMovement()->AirControl = 0.5f;
+
+	FlowComponent = CreateDefaultSubobject<UFlowComponent>(TEXT("FlowComponent"));
+	FlowComponent->IdentityTags = FGameplayTagContainer(PlayerTags::Player_Pawn);
 }
 
 void ADoomsdayDeviceCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -117,4 +123,9 @@ void ADoomsdayDeviceCharacter::DoJumpEnd()
 {
 	// pass StopJumping to the character
 	StopJumping();
+}
+
+FGameplayTagContainer ADoomsdayDeviceCharacter::GetIdentityTags() const
+{
+	return FlowComponent->IdentityTags;
 }

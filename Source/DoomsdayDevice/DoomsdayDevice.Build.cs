@@ -18,7 +18,8 @@ public class DoomsdayDevice : ModuleRules
 			"StateTreeModule",
 			"GameplayStateTreeModule",
 			"UMG",
-			"Slate"
+			"Slate",
+			"Flow"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] { });
@@ -33,8 +34,14 @@ public class DoomsdayDevice : ModuleRules
 			"DoomsdayDevice/Variant_Shooter/Weapons"
 		});
 
-		// Uncomment if you are using Slate UI
-		// PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
+		PrivateDependencyModuleNames.AddRange(new string[] { 
+			"Slate",
+			"SlateCore",
+            "Mover",
+            "NavigationSystem",
+            "GameplayTags",
+            "DeveloperSettings"
+        });
 
 		// Uncomment if you are using online features
 		// PrivateDependencyModuleNames.Add("OnlineSubsystem");

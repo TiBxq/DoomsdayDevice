@@ -13,6 +13,8 @@ class UCameraComponent;
 class UInputAction;
 struct FInputActionValue;
 
+class UFlowComponent;
+
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
 /**
@@ -30,6 +32,9 @@ class ADoomsdayDeviceCharacter : public ACharacter
 	/** First person camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
 	UCameraComponent* FirstPersonCameraComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Components")
+	TObjectPtr<UFlowComponent> FlowComponent;
 
 protected:
 
@@ -76,6 +81,9 @@ protected:
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoJumpEnd();
 
+	UFUNCTION(BlueprintPure, Category = "MossPawn")
+	FGameplayTagContainer GetIdentityTags() const;
+
 protected:
 
 	/** Set up input action bindings */
@@ -89,6 +97,8 @@ public:
 
 	/** Returns first person camera component **/
 	UCameraComponent* GetFirstPersonCameraComponent() const { return FirstPersonCameraComponent; }
+
+	UFlowComponent* GetFlowComponent() const { return FlowComponent; }
 
 };
 

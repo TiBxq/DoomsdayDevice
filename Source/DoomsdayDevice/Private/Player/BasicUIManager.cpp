@@ -90,3 +90,34 @@ void UBasicUIManager::DisplayDialogueLine(const FText& LineText)
 		}
 	}
 }
+
+void UBasicUIManager::SetupDialogueChoices(const TArray<FText>& ChoiceTexts)
+{
+	TSoftClassPtr<UUserWidget> DialogueWidgetClass = GetDefault<UPlayerSettings>()->DialogueWidget;
+
+	if (!OpenedWidgets.Contains(DialogueWidgetClass))
+	{
+		OpenWidget(DialogueWidgetClass);
+	}
+
+	if (TObjectPtr<UUserWidget>* DialogueWidget = OpenedWidgets.Find(DialogueWidgetClass))
+	{
+		if (UDialogueWidget* Widget = Cast<UDialogueWidget>(*DialogueWidget))
+		{
+			Widget->SetupDialogueChoices(ChoiceTexts);
+		}
+	}
+}
+
+void UBasicUIManager::ClearDialogueChoices()
+{
+	TSoftClassPtr<UUserWidget> DialogueWidgetClass = GetDefault<UPlayerSettings>()->DialogueWidget;
+
+	if (TObjectPtr<UUserWidget>* DialogueWidget = OpenedWidgets.Find(DialogueWidgetClass))
+	{
+		if (UDialogueWidget* Widget = Cast<UDialogueWidget>(*DialogueWidget))
+		{
+			Widget->ClearDialogueChoices();
+		}
+	}
+}

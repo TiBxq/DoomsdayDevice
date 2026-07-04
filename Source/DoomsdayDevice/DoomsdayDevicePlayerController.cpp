@@ -79,6 +79,11 @@ void ADoomsdayDevicePlayerController::SetupInputComponent()
 		{
 			EnhancedInputComponent->BindAction(InteractionAction, ETriggerEvent::Started, this, &ADoomsdayDevicePlayerController::OnInteractionUsed);
 			EnhancedInputComponent->BindAction(ContinueDialogueAction, ETriggerEvent::Started, this, &ADoomsdayDevicePlayerController::OnDialogueContinued);
+
+			EnhancedInputComponent->BindAction(SelectFirstChoiceAction, ETriggerEvent::Started, this, &ADoomsdayDevicePlayerController::OnDialogueChoiceSelected, 0);
+			EnhancedInputComponent->BindAction(SelectSecondChoiceAction, ETriggerEvent::Started, this, &ADoomsdayDevicePlayerController::OnDialogueChoiceSelected, 1);
+			EnhancedInputComponent->BindAction(SelectThirdChoiceAction, ETriggerEvent::Started, this, &ADoomsdayDevicePlayerController::OnDialogueChoiceSelected, 2);
+			EnhancedInputComponent->BindAction(SelectFourthChoiceAction, ETriggerEvent::Started, this, &ADoomsdayDevicePlayerController::OnDialogueChoiceSelected, 3);
 		}
 	}
 	
@@ -158,4 +163,9 @@ void ADoomsdayDevicePlayerController::OnInteractionUsed()
 void ADoomsdayDevicePlayerController::OnDialogueContinued()
 {
 	ContinueDialogueEvent.Broadcast();
+}
+
+void ADoomsdayDevicePlayerController::OnDialogueChoiceSelected(const FInputActionValue& Value, int32 Index)
+{
+	SelectDialogueChoiceEvent.Broadcast(Index);
 }

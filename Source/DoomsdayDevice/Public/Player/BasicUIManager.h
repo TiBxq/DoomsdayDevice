@@ -32,5 +32,9 @@ public:
 	void HideWidgets();
 	void RestoreWidgets();
 
+	// ----------- Dialogue ---------------
 	void DisplayDialogueLine(const FText& LineText);
+
+	void SetupDialogueChoices(const TArray<FText>& ChoiceTexts);
+	void ClearDialogueChoices();
 };

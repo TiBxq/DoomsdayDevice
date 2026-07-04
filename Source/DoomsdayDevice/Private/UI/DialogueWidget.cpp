@@ -7,3 +7,13 @@ void UDialogueWidget::AddDialogueLine(const FText& LineText)
 {
 	DisplayDialogueLine(LineText);
 }
+
+void UDialogueWidget::SetupDialogueChoices(const TArray<FText>& ChoiceTexts)
+{
+	DisplayDialogueChoices(ChoiceTexts);
+}
+
+void UDialogueWidget::ClearDialogueChoices()
+{
+	RemoveDialogueChoices();
+}

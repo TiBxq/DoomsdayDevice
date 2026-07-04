@@ -12,6 +12,7 @@ class UInteractionComponent;
 class UInputAction;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FContinueDialogueEvent);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FSelectDialogueChoiceEvent, int32, Index);
 
 /**
  *  Simple first person Player Controller
@@ -30,6 +31,9 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "Dialogue")
 	FContinueDialogueEvent ContinueDialogueEvent;
+
+	UPROPERTY(BlueprintAssignable, Category = "Dialogue")
+	FSelectDialogueChoiceEvent SelectDialogueChoiceEvent;
 
 protected:
 
@@ -59,6 +63,18 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Input")
 	UInputAction* ContinueDialogueAction;
 
+	UPROPERTY(EditAnywhere, Category = "Input")
+	UInputAction* SelectFirstChoiceAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input")
+	UInputAction* SelectSecondChoiceAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input")
+	UInputAction* SelectThirdChoiceAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input")
+	UInputAction* SelectFourthChoiceAction;
+
 	/** Gameplay initialization */
 	virtual void BeginPlay() override;
 
@@ -86,4 +102,7 @@ private:
 	// -------------- Dialogues ------------------
 	UFUNCTION()
 	void OnDialogueContinued();
+
+	UFUNCTION()
+	void OnDialogueChoiceSelected(const FInputActionValue& Value, int32 Index);
 };

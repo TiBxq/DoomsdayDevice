@@ -11,6 +11,8 @@ class UUserWidget;
 class UInteractionComponent;
 class UInputAction;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FContinueDialogueEvent);
+
 /**
  *  Simple first person Player Controller
  *  Manages the input mapping context.
@@ -25,6 +27,9 @@ public:
 
 	/** Constructor */
 	ADoomsdayDevicePlayerController();
+
+	UPROPERTY(BlueprintAssignable, Category = "Dialogue")
+	FContinueDialogueEvent ContinueDialogueEvent;
 
 protected:
 
@@ -48,9 +53,11 @@ protected:
 	UPROPERTY(EditAnywhere, Config, Category = "Input|Touch Controls")
 	bool bForceTouchControls = false;
 
-	/** Jump Input Action */
 	UPROPERTY(EditAnywhere, Category = "Input")
 	UInputAction* InteractionAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input")
+	UInputAction* ContinueDialogueAction;
 
 	/** Gameplay initialization */
 	virtual void BeginPlay() override;
@@ -64,6 +71,7 @@ protected:
 	virtual void PlayerTick(float DeltaTime) override;
 
 private:
+	// ------------ Interactions ---------------
 	TArray<TWeakObjectPtr<UInteractionComponent>> PossibleInteractions;
 	TWeakObjectPtr<UInteractionComponent> ActiveInteraction;
 
@@ -74,4 +82,8 @@ private:
 	void DeactivateInteraction();
 
 	void OnInteractionUsed();
+
+	// -------------- Dialogues ------------------
+	UFUNCTION()
+	void OnDialogueContinued();
 };

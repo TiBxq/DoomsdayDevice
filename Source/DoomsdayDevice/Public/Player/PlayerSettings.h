@@ -17,6 +17,9 @@ class UPlayerSettings final : public UDeveloperSettings
 	UPROPERTY(Config, EditAnywhere, Category = "Input")
 	TSoftClassPtr<UUserWidget> InteractionWidget;
 
+	UPROPERTY(Config, EditAnywhere, Category = "Input")
+	TSoftClassPtr<UUserWidget> DialogueWidget;
+
 	// Contains debug inputs, inactive in Shipping builds
 	UPROPERTY(Config, EditAnywhere, Category = "Widgets")
 	TSoftObjectPtr<UInputMappingContext> DebugContext;

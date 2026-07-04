@@ -5,6 +5,9 @@
 #include "Blueprint/UserWidget.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
 
+#include "Player/PlayerSettings.h"
+#include "UI/DialogueWidget.h"
+
 #include UE_INLINE_GENERATED_CPP_BY_NAME(BasicUIManager)
 
 UBasicUIManager::UBasicUIManager()
@@ -68,4 +71,22 @@ void UBasicUIManager::RestoreWidgets()
 		OpenWidget(WidgetClass);
 	}
 	HiddenWidgets.Empty();
+}
+
+void UBasicUIManager::DisplayDialogueLine(const FText& LineText)
+{
+	TSoftClassPtr<UUserWidget> DialogueWidgetClass = GetDefault<UPlayerSettings>()->DialogueWidget;
+
+	if (!OpenedWidgets.Contains(DialogueWidgetClass))
+	{
+		OpenWidget(DialogueWidgetClass);
+	}
+
+	if (TObjectPtr<UUserWidget>* DialogueWidget = OpenedWidgets.Find(DialogueWidgetClass))
+	{
+		if (UDialogueWidget* Widget = Cast<UDialogueWidget>(*DialogueWidget))
+		{
+			Widget->AddDialogueLine(LineText);
+		}
+	}
 }

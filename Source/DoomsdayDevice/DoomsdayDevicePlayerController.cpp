@@ -78,6 +78,7 @@ void ADoomsdayDevicePlayerController::SetupInputComponent()
 		if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent))
 		{
 			EnhancedInputComponent->BindAction(InteractionAction, ETriggerEvent::Started, this, &ADoomsdayDevicePlayerController::OnInteractionUsed);
+			EnhancedInputComponent->BindAction(ContinueDialogueAction, ETriggerEvent::Started, this, &ADoomsdayDevicePlayerController::OnDialogueContinued);
 		}
 	}
 	
@@ -152,4 +153,9 @@ void ADoomsdayDevicePlayerController::OnInteractionUsed()
 	{
 		ActiveInteraction->OnUsed.Broadcast();
 	}
+}
+
+void ADoomsdayDevicePlayerController::OnDialogueContinued()
+{
+	ContinueDialogueEvent.Broadcast();
 }

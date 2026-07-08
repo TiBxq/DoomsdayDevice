@@ -21,11 +21,13 @@ void UFlowNode_DialogueLine::ExecuteInput(const FName& PinName)
 	{
 		if (UBasicUIManager* UIManager = PC->GetLocalPlayer()->GetSubsystem<UBasicUIManager>())
 		{
+			PC->ContinueDialogueEvent.RemoveDynamic(this, &UFlowNode_DialogueLine::OnDialogueLineCompleted);
+			PC->ContinueDialogueEvent.AddDynamic(this, &UFlowNode_DialogueLine::OnDialogueLineCompleted);
+
 			UIManager->DisplayDialogueLine(LineText);
+
 			TriggerOutput(TEXT("Displayed"));
 		}
-
-		PC->ContinueDialogueEvent.AddDynamic(this, &UFlowNode_DialogueLine::OnDialogueLineCompleted);
 	}
 }
 

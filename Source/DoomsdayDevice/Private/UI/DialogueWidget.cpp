@@ -3,9 +3,9 @@
 
 #include "UI/DialogueWidget.h"
 
-void UDialogueWidget::AddDialogueLine(const FText& LineText)
+void UDialogueWidget::AddDialogueLine(const FText& LineText, TObjectPtr<UDialogSpeakerDataAsset> SpeakerData)
 {
-	DisplayDialogueLine(LineText);
+	DisplayDialogueLine(LineText, SpeakerData);
 }
 
 void UDialogueWidget::SetupDialogueChoices(const TArray<FText>& ChoiceTexts)

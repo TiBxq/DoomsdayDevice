@@ -5,6 +5,7 @@
 #include "BasicUIManager.generated.h"
 
 class UUserWidget;
+class UDialogSpeakerDataAsset;
 
 /**
  *
@@ -33,7 +34,7 @@ public:
 	void RestoreWidgets();
 
 	// ----------- Dialogue ---------------
-	void DisplayDialogueLine(const FText& LineText);
+	void DisplayDialogueLine(const FText& LineText, TObjectPtr<UDialogSpeakerDataAsset> SpeakerData);
 
 	void SetupDialogueChoices(const TArray<FText>& ChoiceTexts);
 	void ClearDialogueChoices();

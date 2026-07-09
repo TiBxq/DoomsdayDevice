@@ -24,7 +24,7 @@ void UFlowNode_DialogueLine::ExecuteInput(const FName& PinName)
 			PC->ContinueDialogueEvent.RemoveDynamic(this, &UFlowNode_DialogueLine::OnDialogueLineCompleted);
 			PC->ContinueDialogueEvent.AddDynamic(this, &UFlowNode_DialogueLine::OnDialogueLineCompleted);
 
-			UIManager->DisplayDialogueLine(LineText);
+			UIManager->DisplayDialogueLine(LineText, SpeakerData);
 
 			TriggerOutput(TEXT("Displayed"));
 		}

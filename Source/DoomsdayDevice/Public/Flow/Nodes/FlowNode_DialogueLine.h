@@ -4,7 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "Nodes/FlowNode.h"
+
 #include "FlowNode_DialogueLine.generated.h"
+
+class UDialogSpeakerDataAsset;
 
 /**
  * 
@@ -20,6 +23,9 @@ public:
 protected:
 	UPROPERTY(EditAnywhere, Category = "Dialogue")
 	FText LineText;
+
+	UPROPERTY(EditAnywhere, Category = "Dialogue")
+	TObjectPtr<UDialogSpeakerDataAsset> SpeakerData;
 
 protected:
 	virtual void ExecuteInput(const FName& PinName) override;

@@ -73,7 +73,7 @@ void UBasicUIManager::RestoreWidgets()
 	HiddenWidgets.Empty();
 }
 
-void UBasicUIManager::DisplayDialogueLine(const FText& LineText)
+void UBasicUIManager::DisplayDialogueLine(const FText& LineText, TObjectPtr<UDialogSpeakerDataAsset> SpeakerData)
 {
 	TSoftClassPtr<UUserWidget> DialogueWidgetClass = GetDefault<UPlayerSettings>()->DialogueWidget;
 
@@ -86,7 +86,7 @@ void UBasicUIManager::DisplayDialogueLine(const FText& LineText)
 	{
 		if (UDialogueWidget* Widget = Cast<UDialogueWidget>(*DialogueWidget))
 		{
-			Widget->AddDialogueLine(LineText);
+			Widget->AddDialogueLine(LineText, SpeakerData);
 		}
 	}
 }

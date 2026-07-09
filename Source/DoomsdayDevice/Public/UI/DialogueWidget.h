@@ -6,6 +6,8 @@
 #include "Blueprint/UserWidget.h"
 #include "DialogueWidget.generated.h"
 
+class UDialogSpeakerDataAsset;
+
 /**
  * 
  */
@@ -15,14 +17,14 @@ class DOOMSDAYDEVICE_API UDialogueWidget : public UUserWidget
 	GENERATED_BODY()
 	
 public:
-	void AddDialogueLine(const FText& LineText);
+	void AddDialogueLine(const FText& LineText, TObjectPtr<UDialogSpeakerDataAsset> SpeakerData);
 
 	void SetupDialogueChoices(const TArray<FText>& ChoiceTexts);
 
 	void ClearDialogueChoices();
 
 	UFUNCTION(BlueprintImplementableEvent)
-	void DisplayDialogueLine(const FText& LineText);
+	void DisplayDialogueLine(const FText& LineText, UDialogSpeakerDataAsset* SpeakerData);
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void DisplayDialogueChoices(const TArray<FText>& ChoiceTexts);

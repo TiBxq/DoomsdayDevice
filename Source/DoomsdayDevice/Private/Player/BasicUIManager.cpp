@@ -75,49 +75,45 @@ void UBasicUIManager::RestoreWidgets()
 
 void UBasicUIManager::DisplayDialogueLine(const FText& LineText, TObjectPtr<UDialogSpeakerDataAsset> SpeakerData)
 {
-	TSoftClassPtr<UUserWidget> DialogueWidgetClass = GetDefault<UPlayerSettings>()->DialogueWidget;
-
-	if (!OpenedWidgets.Contains(DialogueWidgetClass))
+	if (UDialogueWidget* Widget = GetDialogueWidget(true))
 	{
-		OpenWidget(DialogueWidgetClass);
-	}
-
-	if (TObjectPtr<UUserWidget>* DialogueWidget = OpenedWidgets.Find(DialogueWidgetClass))
-	{
-		if (UDialogueWidget* Widget = Cast<UDialogueWidget>(*DialogueWidget))
-		{
-			Widget->AddDialogueLine(LineText, SpeakerData);
-		}
+		Widget->AddDialogueLine(LineText, SpeakerData);
 	}
 }
 
 void UBasicUIManager::SetupDialogueChoices(const TArray<FText>& ChoiceTexts)
 {
-	TSoftClassPtr<UUserWidget> DialogueWidgetClass = GetDefault<UPlayerSettings>()->DialogueWidget;
-
-	if (!OpenedWidgets.Contains(DialogueWidgetClass))
+	if (UDialogueWidget* Widget = GetDialogueWidget(true))
 	{
-		OpenWidget(DialogueWidgetClass);
-	}
-
-	if (TObjectPtr<UUserWidget>* DialogueWidget = OpenedWidgets.Find(DialogueWidgetClass))
-	{
-		if (UDialogueWidget* Widget = Cast<UDialogueWidget>(*DialogueWidget))
-		{
-			Widget->SetupDialogueChoices(ChoiceTexts);
-		}
+		Widget->SetupDialogueChoices(ChoiceTexts);
 	}
 }
 
 void UBasicUIManager::ClearDialogueChoices()
 {
-	TSoftClassPtr<UUserWidget> DialogueWidgetClass = GetDefault<UPlayerSettings>()->DialogueWidget;
-
-	if (TObjectPtr<UUserWidget>* DialogueWidget = OpenedWidgets.Find(DialogueWidgetClass))
+	if (UDialogueWidget* Widget = GetDialogueWidget(false))
 	{
-		if (UDialogueWidget* Widget = Cast<UDialogueWidget>(*DialogueWidget))
-		{
-			Widget->ClearDialogueChoices();
-		}
+		Widget->ClearDialogueChoices();
 	}
+}
+
+bool UBasicUIManager::SkipDialogueLineReveal()
+{
+	if (UDialogueWidget* Widget = GetDialogueWidget(false))
+	{
+		return Widget->SkipReveal();
+	}
+	return false;
+}
+
+UDialogueWidget* UBasicUIManager::GetDialogueWidget(const bool bOpenIfNeeded)
+{
+	const TSoftClassPtr<UUserWidget> DialogueWidgetClass = GetDefault<UPlayerSettings>()->DialogueWidget;
+
+	if (bOpenIfNeeded && !OpenedWidgets.Contains(DialogueWidgetClass))
+	{
+		OpenWidget(DialogueWidgetClass);
+	}
+
+	return Cast<UDialogueWidget>(OpenedWidgets.FindRef(DialogueWidgetClass));
 }

@@ -6,6 +6,7 @@
 
 class UUserWidget;
 class UDialogSpeakerDataAsset;
+class UDialogueWidget;
 
 /**
  *
@@ -38,4 +39,10 @@ public:
 
 	void SetupDialogueChoices(const TArray<FText>& ChoiceTexts);
 	void ClearDialogueChoices();
+
+	/** Returns true if the open dialogue widget had a line reveal in progress and it was skipped. */
+	bool SkipDialogueLineReveal();
+
+private:
+	UDialogueWidget* GetDialogueWidget(bool bOpenIfNeeded);
 };

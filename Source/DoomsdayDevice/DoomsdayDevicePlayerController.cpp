@@ -162,6 +162,15 @@ void ADoomsdayDevicePlayerController::OnInteractionUsed()
 
 void ADoomsdayDevicePlayerController::OnDialogueContinued()
 {
+	if (UBasicUIManager* UIManager = GetLocalPlayer()->GetSubsystem<UBasicUIManager>())
+	{
+		if (UIManager->SkipDialogueLineReveal())
+		{
+			// Press consumed: the reveal was skipped, the line does not advance.
+			return;
+		}
+	}
+
 	ContinueDialogueEvent.Broadcast();
 }
 

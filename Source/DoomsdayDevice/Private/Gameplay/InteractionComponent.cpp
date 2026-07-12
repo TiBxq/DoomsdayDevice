@@ -4,6 +4,7 @@
 
 #include "Camera/PlayerCameraManager.h"
 #include "Engine/World.h"
+#include "Kismet/GameplayStatics.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(InteractionComponent)
 
@@ -64,10 +65,25 @@ void UInteractionComponent::TickComponent(float DeltaTime, ELevelTick TickType, 
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	bool bConditionsMet = false;
-	if (CameraManager.IsValid())
+	if (CameraManager.IsValid() && GetWorld())
 	{
 		const FVector DistanceToCamera = GetComponentLocation() - CameraManager->GetCameraLocation();
-		bConditionsMet = DistanceToCamera.Size() < Distance;
+		bool bCloseEnough = DistanceToCamera.Size() < Distance;
+
+		if (bCloseEnough)
+		{
+			AActor* PlayerPawn = Cast<AActor>(UGameplayStatics::GetPlayerPawn(GetWorld(), 0));
+
+			FHitResult Result;
+			FCollisionQueryParams QueryParams;
+			QueryParams.AddIgnoredActor(PlayerPawn);
+			FVector Target = CameraManager->GetCameraLocation() + CameraManager->GetCameraRotation().Vector() * Distance * 2;
+			GetWorld()->LineTraceSingleByChannel(Result, CameraManager->GetCameraLocation(), Target, ECollisionChannel::ECC_Visibility, QueryParams);
+
+			//DrawDebugLine(GetWorld(), CameraManager->GetCameraLocation(), Target, FColor(255, 0, 0), false, 5, 1, 3.f);
+
+			bConditionsMet = Result.bBlockingHit && Result.GetActor() == GetOwner();
+		}
 	}
 
 	if (bConditionsMet)

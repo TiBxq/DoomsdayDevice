@@ -39,5 +39,7 @@ protected:
 public:
 	virtual FString GetNodeDescription() const override;
 	virtual EDataValidationResult ValidateNode() override;
+
+	virtual void UpdateNodeConfigText_Implementation() override;
 #endif
 };

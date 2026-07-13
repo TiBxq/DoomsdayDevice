@@ -5,6 +5,9 @@
 
 #include "Player/BasicUIManager.h"
 #include "DoomsdayDevicePlayerController.h"
+#include "Dialogue/DialogSpeakerDataAsset.h"
+
+#define LOCTEXT_NAMESPACE "FlowNode_DialogueLine"
 
 UFlowNode_DialogueLine::UFlowNode_DialogueLine()
 {
@@ -55,4 +58,12 @@ EDataValidationResult UFlowNode_DialogueLine::ValidateNode()
 void UFlowNode_DialogueLine::OnDialogueLineCompleted()
 {
 	TriggerOutput(TEXT("Completed"), true);
+}
+
+void UFlowNode_DialogueLine::UpdateNodeConfigText_Implementation()
+{
+	if (SpeakerData)
+	{
+		SetNodeConfigText(FText::Format(LOCTEXT("DialogueLineInfo", "Speaker: {0}"), { SpeakerData->DisplayName }));
+	}
 }

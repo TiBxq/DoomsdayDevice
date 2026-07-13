@@ -72,17 +72,24 @@ void UInteractionComponent::TickComponent(float DeltaTime, ELevelTick TickType, 
 
 		if (bCloseEnough)
 		{
-			AActor* PlayerPawn = Cast<AActor>(UGameplayStatics::GetPlayerPawn(GetWorld(), 0));
+			if (bPrecise)
+			{
+				AActor* PlayerPawn = Cast<AActor>(UGameplayStatics::GetPlayerPawn(GetWorld(), 0));
 
-			FHitResult Result;
-			FCollisionQueryParams QueryParams;
-			QueryParams.AddIgnoredActor(PlayerPawn);
-			FVector Target = CameraManager->GetCameraLocation() + CameraManager->GetCameraRotation().Vector() * Distance * 2;
-			GetWorld()->LineTraceSingleByChannel(Result, CameraManager->GetCameraLocation(), Target, ECollisionChannel::ECC_Visibility, QueryParams);
+				FHitResult Result;
+				FCollisionQueryParams QueryParams;
+				QueryParams.AddIgnoredActor(PlayerPawn);
+				FVector Target = CameraManager->GetCameraLocation() + CameraManager->GetCameraRotation().Vector() * Distance * 2;
+				GetWorld()->LineTraceSingleByChannel(Result, CameraManager->GetCameraLocation(), Target, ECollisionChannel::ECC_Visibility, QueryParams);
 
-			//DrawDebugLine(GetWorld(), CameraManager->GetCameraLocation(), Target, FColor(255, 0, 0), false, 5, 1, 3.f);
+				//DrawDebugLine(GetWorld(), CameraManager->GetCameraLocation(), Target, FColor(255, 0, 0), false, 5, 1, 3.f);
 
-			bConditionsMet = Result.bBlockingHit && Result.GetActor() == GetOwner();
+				bConditionsMet = Result.bBlockingHit && Result.GetActor() == GetOwner();
+			}
+			else
+			{
+				bConditionsMet = true;
+			}
 		}
 	}
 

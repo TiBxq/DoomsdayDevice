@@ -28,6 +28,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interaction", meta = (ClampMin = 50.0f))
 	float Distance;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interaction")
+	bool bPrecise = false;
+
 private:
 	bool bCanInteract;
 	TWeakObjectPtr<APlayerCameraManager> CameraManager;

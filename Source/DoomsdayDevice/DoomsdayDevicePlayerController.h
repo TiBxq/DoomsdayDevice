@@ -60,6 +60,10 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Input")
 	UInputAction* InteractionAction;
 
+	/** Drops the carried heavy item */
+	UPROPERTY(EditAnywhere, Category = "Input")
+	UInputAction* DropAction;
+
 	UPROPERTY(EditAnywhere, Category = "Input")
 	UInputAction* ContinueDialogueAction;
 
@@ -98,6 +102,7 @@ private:
 	void DeactivateInteraction();
 
 	void OnInteractionUsed();
+	void OnDropUsed();
 
 	// -------------- Dialogues ------------------
 	UFUNCTION()

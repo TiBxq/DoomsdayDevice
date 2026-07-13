@@ -7,6 +7,7 @@
 #include "Engine/LocalPlayer.h"
 #include "InputMappingContext.h"
 #include "DoomsdayDeviceCameraManager.h"
+#include "DoomsdayDeviceCharacter.h"
 #include "Blueprint/UserWidget.h"
 #include "DoomsdayDevice.h"
 #include "Widgets/Input/SVirtualJoystick.h"
@@ -78,6 +79,10 @@ void ADoomsdayDevicePlayerController::SetupInputComponent()
 		if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent))
 		{
 			EnhancedInputComponent->BindAction(InteractionAction, ETriggerEvent::Started, this, &ADoomsdayDevicePlayerController::OnInteractionUsed);
+			if (DropAction)
+			{
+				EnhancedInputComponent->BindAction(DropAction, ETriggerEvent::Started, this, &ADoomsdayDevicePlayerController::OnDropUsed);
+			}
 			EnhancedInputComponent->BindAction(ContinueDialogueAction, ETriggerEvent::Started, this, &ADoomsdayDevicePlayerController::OnDialogueContinued);
 
 			EnhancedInputComponent->BindAction(SelectFirstChoiceAction, ETriggerEvent::Started, this, &ADoomsdayDevicePlayerController::OnDialogueChoiceSelected, 0);
@@ -157,6 +162,22 @@ void ADoomsdayDevicePlayerController::OnInteractionUsed()
 	if (ActiveInteraction.IsValid())
 	{
 		ActiveInteraction->OnUsed.Broadcast();
+	}
+	else
+	{
+		// no interaction targeted: pressing "use" while carrying a heavy item drops it
+		OnDropUsed();
+	}
+}
+
+void ADoomsdayDevicePlayerController::OnDropUsed()
+{
+	if (ADoomsdayDeviceCharacter* PlayerCharacter = Cast<ADoomsdayDeviceCharacter>(GetPawn()))
+	{
+		if (PlayerCharacter->IsCarrying())
+		{
+			PlayerCharacter->DropCarriedItem();
+		}
 	}
 }
 

@@ -17,9 +17,13 @@ There is one runtime C++ module, `DoomsdayDevice`. No automation tests exist in 
 # Launch the editor
 & "D:\unreal\UE_5.8\Engine\Binaries\Win64\UnrealEditor.exe" "D:\projects\DoomsdayDevice\DoomsdayDevice.uproject"
 
-# Regenerate VS project files (after adding/removing source files)
-& "D:\unreal\UE_5.8\Engine\Build\BatchFiles\GenerateProjectFiles.bat" -project="D:\projects\DoomsdayDevice\DoomsdayDevice.uproject" -game
+# Regenerate VS project files (after adding/removing source files).
+# GenerateProjectFiles.bat does not exist in this engine install, and UnrealBuildTool.exe
+# needs the engine-bundled .NET 10 runtime (system dotnet is too old):
+cmd /c "call ""D:\unreal\UE_5.8\Engine\Build\BatchFiles\GetDotnetPath.bat"" && ""D:\unreal\UE_5.8\Engine\Binaries\DotNET\UnrealBuildTool\UnrealBuildTool.exe"" -ProjectFiles -Project=""D:\projects\DoomsdayDevice\DoomsdayDevice.uproject"" -Game"
 ```
+
+Build.bat requires the editor closed. While the editor is running, C++ changes — including brand-new UCLASSes — can instead be compiled in with Live Coding: run the `LiveCoding.Compile` console command in the editor and watch the log for "Live coding succeeded". The patch lasts only for that editor session; run Build.bat later for durable binaries.
 
 The engine's experimental `ModelContextProtocol`, `Terminal`, and `AllToolsets` plugins are enabled, so a running editor can be driven over MCP. `.mcp.json` points at the in-editor server (`http://127.0.0.1:8000/mcp`, only up while the editor runs). It exposes three meta-tools — `list_toolsets`, `describe_toolset`, `call_tool` — wrapping toolsets such as `SceneTools` (find/spawn/save actors), `ObjectTools` (get/set properties; params are `instance` + `properties`), `EditorAppToolset` (PIE control, viewport capture), and `LogsToolset`. Quirks: `find_actors` requires `name`/`tag`/`collision_channels` even when unused (pass `""`, `""`, `[]`), and on one-file-per-actor levels `save_actor` fails for newly spawned actors — use `AssetTools.save_assets` with an empty list instead.
 

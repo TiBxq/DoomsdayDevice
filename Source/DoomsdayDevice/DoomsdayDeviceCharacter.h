@@ -14,6 +14,7 @@ class UInputAction;
 struct FInputActionValue;
 
 class UFlowComponent;
+class UCarryableComponent;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
@@ -35,6 +36,10 @@ class ADoomsdayDeviceCharacter : public ACharacter
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Components")
 	TObjectPtr<UFlowComponent> FlowComponent;
+
+	/** Carried heavy items attach here (chest height, in front of the capsule) */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<USceneComponent> CarryAttachPoint;
 
 protected:
 
@@ -92,6 +97,23 @@ protected:
 
 public:
 
+	UFUNCTION(BlueprintPure, Category = "Carry")
+	bool IsCarrying() const { return CarriedItem.IsValid(); }
+
+	UFUNCTION(BlueprintPure, Category = "Carry")
+	UCarryableComponent* GetCarriedItem() const;
+
+	/** Attaches the item to the carry point and slows movement. Disables the item's interaction. */
+	UFUNCTION(BlueprintCallable, Category = "Carry")
+	void StartCarry(UCarryableComponent* Item);
+
+	/** Stops carrying without dropping: detach + restore speed + clear state. Callers handle collision/interaction. */
+	void ReleaseCarriedItem();
+
+	/** Releases the carried item and settles it on the ground in front of the player */
+	UFUNCTION(BlueprintCallable, Category = "Carry")
+	void DropCarriedItem();
+
 	/** Returns the first person mesh **/
 	USkeletalMeshComponent* GetFirstPersonMesh() const { return FirstPersonMesh; }
 
@@ -99,6 +121,13 @@ public:
 	UCameraComponent* GetFirstPersonCameraComponent() const { return FirstPersonCameraComponent; }
 
 	UFlowComponent* GetFlowComponent() const { return FlowComponent; }
+
+private:
+
+	TWeakObjectPtr<UCarryableComponent> CarriedItem;
+
+	/** MaxWalkSpeed before the carry slow was applied; assumes nothing else mutates it mid-carry */
+	float CachedWalkSpeed = 0.0f;
 
 };
 

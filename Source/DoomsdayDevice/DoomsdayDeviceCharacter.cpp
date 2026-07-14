@@ -8,9 +8,11 @@
 #include "EnhancedInputComponent.h"
 #include "InputActionValue.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Engine/World.h"
 #include "DoomsdayDevice.h"
 
 #include "FlowComponent.h"
+#include "Gameplay/CarryableComponent.h"
 #include "Player/PlayerTags.h"
 
 ADoomsdayDeviceCharacter::ADoomsdayDeviceCharacter()
@@ -48,6 +50,11 @@ ADoomsdayDeviceCharacter::ADoomsdayDeviceCharacter()
 
 	FlowComponent = CreateDefaultSubobject<UFlowComponent>(TEXT("FlowComponent"));
 	FlowComponent->IdentityTags = FGameplayTagContainer(PlayerTags::Player_Pawn);
+
+	// carried heavy items attach to the capsule (not the camera) so they follow yaw but not pitch
+	CarryAttachPoint = CreateDefaultSubobject<USceneComponent>(TEXT("CarryAttachPoint"));
+	CarryAttachPoint->SetupAttachment(GetCapsuleComponent());
+	CarryAttachPoint->SetRelativeLocation(FVector(75.0f, 0.0f, 10.0f));
 }
 
 void ADoomsdayDeviceCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -128,4 +135,93 @@ void ADoomsdayDeviceCharacter::DoJumpEnd()
 FGameplayTagContainer ADoomsdayDeviceCharacter::GetIdentityTags() const
 {
 	return FlowComponent->IdentityTags;
+}
+
+UCarryableComponent* ADoomsdayDeviceCharacter::GetCarriedItem() const
+{
+	return CarriedItem.Get();
+}
+
+void ADoomsdayDeviceCharacter::StartCarry(UCarryableComponent* Item)
+{
+	if (!Item || CarriedItem.IsValid())
+	{
+		return;
+	}
+
+	AActor* ItemActor = Item->GetOwner();
+	if (!ItemActor)
+	{
+		return;
+	}
+
+	// Disable() first: removes the item from the controller's interaction candidates
+	// (PlayerTick dereferences them unchecked) and keeps it from hogging ActiveInteraction
+	// while glued to the player
+	Item->Disable();
+
+	if (UPrimitiveComponent* RootPrimitive = Cast<UPrimitiveComponent>(ItemActor->GetRootComponent()))
+	{
+		if (RootPrimitive->IsSimulatingPhysics())
+		{
+			RootPrimitive->SetSimulatePhysics(false);
+		}
+	}
+
+	// no collision while carried, so the item can't push the player or block
+	// the precise-interaction visibility traces (they only ignore the pawn)
+	ItemActor->SetActorEnableCollision(false);
+	ItemActor->AttachToComponent(CarryAttachPoint, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+
+	CachedWalkSpeed = GetCharacterMovement()->MaxWalkSpeed;
+	GetCharacterMovement()->MaxWalkSpeed = CachedWalkSpeed * Item->CarrySpeedMultiplier;
+
+	CarriedItem = Item;
+}
+
+void ADoomsdayDeviceCharacter::ReleaseCarriedItem()
+{
+	if (!CarriedItem.IsValid())
+	{
+		return;
+	}
+
+	if (AActor* ItemActor = CarriedItem->GetOwner())
+	{
+		ItemActor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+	}
+
+	GetCharacterMovement()->MaxWalkSpeed = CachedWalkSpeed;
+	CarriedItem = nullptr;
+}
+
+void ADoomsdayDeviceCharacter::DropCarriedItem()
+{
+	UCarryableComponent* Item = CarriedItem.Get();
+	if (!Item)
+	{
+		return;
+	}
+
+	AActor* ItemActor = Item->GetOwner();
+	ReleaseCarriedItem();
+
+	if (ItemActor)
+	{
+		// settle on the ground below - the attach point floats ~1m above the floor
+		FHitResult Hit;
+		FCollisionQueryParams QueryParams;
+		QueryParams.AddIgnoredActor(ItemActor);
+		QueryParams.AddIgnoredActor(this);
+		const FVector Start = ItemActor->GetActorLocation();
+		if (GetWorld()->LineTraceSingleByChannel(Hit, Start, Start - FVector(0.0f, 0.0f, 500.0f), ECC_Visibility, QueryParams))
+		{
+			const FBox Bounds = ItemActor->GetComponentsBoundingBox(/*bNonColliding*/ true);
+			ItemActor->SetActorLocation(FVector(Start.X, Start.Y, Hit.ImpactPoint.Z + (Start.Z - Bounds.Min.Z)));
+		}
+
+		ItemActor->SetActorEnableCollision(true);
+	}
+
+	Item->Enable();
 }

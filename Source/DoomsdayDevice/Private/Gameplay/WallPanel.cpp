@@ -14,6 +14,9 @@ AWallPanel::AWallPanel()
 {
 	PrimaryActorTick.bCanEverTick = false;
 
+	PanelRootComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("PanelRoot"));
+	RootComponent = PanelRootComponent;
+
 	MeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> CubeMesh(TEXT("/Engine/BasicShapes/Cube.Cube"));
 	if (CubeMesh.Succeeded())
@@ -21,7 +24,7 @@ AWallPanel::AWallPanel()
 		MeshComponent->SetStaticMesh(CubeMesh.Object);
 	}
 	MeshComponent->SetRelativeScale3D(FVector(0.06f, 0.8f, 0.8f));
-	RootComponent = MeshComponent;
+	MeshComponent->SetupAttachment(RootComponent);
 
 	// make the dangle settle instead of swinging forever
 	MeshComponent->SetLinearDamping(0.3f);

@@ -13,7 +13,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FPanelScrewEvent, class APanelScrew*
  * Screw holding a wall panel: interacting ejects it with physics, leaving it as debris.
  * Spawned by AWallPanel at its screw slots; the panel stamps identity tags at spawn.
  */
-UCLASS(ClassGroup = Gameplay)
+UCLASS(Blueprintable, ClassGroup = Gameplay)
 class DOOMSDAYDEVICE_API APanelScrew : public AActor
 {
 	GENERATED_BODY()

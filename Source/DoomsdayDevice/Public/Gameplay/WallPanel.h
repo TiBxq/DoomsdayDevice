@@ -9,6 +9,7 @@ class APanelScrew;
 class UFlowComponent;
 class UPhysicsConstraintComponent;
 class UStaticMeshComponent;
+class USceneComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FWallPanelEvent);
 
@@ -17,7 +18,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FWallPanelEvent);
  * The panel stays fixed while two or more screws remain, dangles off the last
  * remaining screw, and falls off the wall once that final screw is ejected.
  */
-UCLASS(ClassGroup = Gameplay)
+UCLASS(Blueprintable, ClassGroup = Gameplay)
 class DOOMSDAYDEVICE_API AWallPanel : public AActor
 {
 	GENERATED_BODY()
@@ -50,6 +51,9 @@ public:
 	bool IsFullyDetached() const { return bDetached; }
 
 protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Panel")
+	TObjectPtr<USceneComponent> PanelRootComponent;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Panel")
 	TObjectPtr<UStaticMeshComponent> MeshComponent;
 

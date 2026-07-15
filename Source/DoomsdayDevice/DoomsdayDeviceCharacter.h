@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "GameplayTagContainer.h"
 #include "Logging/LogMacros.h"
 #include "DoomsdayDeviceCharacter.generated.h"
 
@@ -15,6 +16,8 @@ struct FInputActionValue;
 
 class UFlowComponent;
 class UCarryableComponent;
+class AToolActor;
+class UBasicUIManager;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
@@ -58,9 +61,18 @@ protected:
 	/** Mouse Look Input Action */
 	UPROPERTY(EditAnywhere, Category ="Input")
 	class UInputAction* MouseLookAction;
-	
+
+	/** Socket on the first person arms mesh that equipped tools attach to */
+	UPROPERTY(EditAnywhere, Category = "Tools")
+	FName ToolHandSocketName = FName("HandGrip_R");
+
 public:
 	ADoomsdayDeviceCharacter();
+
+protected:
+
+	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 protected:
 
@@ -114,6 +126,25 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Carry")
 	void DropCarriedItem();
 
+	/** Equips the slot's tool, or unequips it if already equipped. Ignored while carrying or if the slot is locked. */
+	UFUNCTION(BlueprintCallable, Category = "Tools")
+	void ToggleToolSlot(int32 SlotIndex);
+
+	UFUNCTION(BlueprintCallable, Category = "Tools")
+	void UnequipTool();
+
+	/** Currently equipped slot index; INDEX_NONE for empty hands */
+	UFUNCTION(BlueprintPure, Category = "Tools")
+	int32 GetEquippedToolSlot() const { return EquippedToolSlot; }
+
+	/** Tag of the tool in hands; empty tag when unequipped */
+	UFUNCTION(BlueprintPure, Category = "Tools")
+	FGameplayTag GetEquippedToolTag() const;
+
+	/** A slot is unlocked once its tool tag has been collected into the inventory */
+	UFUNCTION(BlueprintPure, Category = "Tools")
+	bool IsToolSlotUnlocked(int32 SlotIndex) const;
+
 	/** Returns the first person mesh **/
 	USkeletalMeshComponent* GetFirstPersonMesh() const { return FirstPersonMesh; }
 
@@ -129,5 +160,16 @@ private:
 	/** MaxWalkSpeed before the carry slow was applied; assumes nothing else mutates it mid-carry */
 	float CachedWalkSpeed = 0.0f;
 
+	/** Spawned tool actors, parallel to UPlayerSettings::ToolSlots; nullptr until first equipped */
+	UPROPERTY()
+	TArray<TObjectPtr<AToolActor>> ToolActors;
+
+	int32 EquippedToolSlot = INDEX_NONE;
+
+	void HandleItemCollected(const FGameplayTag& ItemTag, int32 NewCount);
+
+	AToolActor* GetOrSpawnToolActor(int32 SlotIndex);
+
+	UBasicUIManager* GetUIManager() const;
 };
 

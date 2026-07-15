@@ -2,6 +2,7 @@
 #pragma once
 
 #include "Engine/DeveloperSettings.h"
+#include "Gameplay/ToolSlotDefinition.h"
 #include "PlayerSettings.generated.h"
 
 class UInputMappingContext;
@@ -19,6 +20,13 @@ class UPlayerSettings final : public UDeveloperSettings
 
 	UPROPERTY(Config, EditAnywhere, Category = "Input")
 	TSoftClassPtr<UUserWidget> DialogueWidget;
+
+	UPROPERTY(Config, EditAnywhere, Category = "Input")
+	TSoftClassPtr<UUserWidget> ToolSlotsWidget;
+
+	/** Static tool slots; index = hotkey number - 1. Slots unlock when their ToolTag is collected. */
+	UPROPERTY(Config, EditAnywhere, Category = "Tools")
+	TArray<FToolSlotDefinition> ToolSlots;
 
 	// Contains debug inputs, inactive in Shipping builds
 	UPROPERTY(Config, EditAnywhere, Category = "Widgets")

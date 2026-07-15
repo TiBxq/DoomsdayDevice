@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
+#include "GameplayTagContainer.h"
 #include "DoomsdayDevicePlayerController.generated.h"
 
 class UInputMappingContext;
@@ -13,6 +14,7 @@ class UInputAction;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FContinueDialogueEvent);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FSelectDialogueChoiceEvent, int32, Index);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInteractionUseDeniedEvent, FGameplayTag, RequiredToolTag);
 
 /**
  *  Simple first person Player Controller
@@ -34,6 +36,10 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "Dialogue")
 	FSelectDialogueChoiceEvent SelectDialogueChoiceEvent;
+
+	/** Fired when Use is pressed on an interaction whose required tool is not in hand (for UI feedback). */
+	UPROPERTY(BlueprintAssignable, Category = "Interaction")
+	FInteractionUseDeniedEvent OnInteractionUseDenied;
 
 protected:
 
@@ -79,6 +85,10 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Input")
 	UInputAction* SelectFourthChoiceAction;
 
+	/** Tool slot hotkeys; array index = slot index in UPlayerSettings::ToolSlots */
+	UPROPERTY(EditAnywhere, Category = "Input")
+	TArray<UInputAction*> ToolSlotActions;
+
 	/** Gameplay initialization */
 	virtual void BeginPlay() override;
 
@@ -110,4 +120,8 @@ private:
 
 	UFUNCTION()
 	void OnDialogueChoiceSelected(const FInputActionValue& Value, int32 Index);
+
+	// -------------- Tools ------------------
+	UFUNCTION()
+	void OnToolSlotPressed(const FInputActionValue& Value, int32 SlotIndex);
 };

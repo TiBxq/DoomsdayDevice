@@ -60,6 +60,11 @@ void UInteractionComponent::Disable()
 	CameraManager = nullptr;
 }
 
+bool UInteractionComponent::IsToolRequirementMet(const FGameplayTag& EquippedToolTag) const
+{
+	return !RequiredToolTag.IsValid() || EquippedToolTag.MatchesTag(RequiredToolTag);
+}
+
 void UInteractionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);

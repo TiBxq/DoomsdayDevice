@@ -13,6 +13,7 @@
 #include "Widgets/Input/SVirtualJoystick.h"
 
 #include "Gameplay/InteractionComponent.h"
+#include "Gameplay/InventorySubsystem.h"
 #include "Player/BasicUIManager.h"
 #include "Player/PlayerSettings.h"
 #include "Player/PlayerTags.h"
@@ -48,6 +49,24 @@ void ADoomsdayDevicePlayerController::BeginPlay()
 
 		}
 
+	}
+
+	// if a tool was already collected (e.g. after a level transition), show the slots bar;
+	// the widget pulls unlock/selection state itself on construct
+	if (IsLocalPlayerController())
+	{
+		const UInventorySubsystem* Inventory = GetGameInstance() ? GetGameInstance()->GetSubsystem<UInventorySubsystem>() : nullptr;
+		if (Inventory)
+		{
+			for (const FToolSlotDefinition& Slot : GetDefault<UPlayerSettings>()->ToolSlots)
+			{
+				if (Inventory->HasItem(Slot.ToolTag))
+				{
+					GetLocalPlayer()->GetSubsystem<UBasicUIManager>()->OpenWidget(GetDefault<UPlayerSettings>()->ToolSlotsWidget);
+					break;
+				}
+			}
+		}
 	}
 }
 
@@ -89,6 +108,14 @@ void ADoomsdayDevicePlayerController::SetupInputComponent()
 			EnhancedInputComponent->BindAction(SelectSecondChoiceAction, ETriggerEvent::Started, this, &ADoomsdayDevicePlayerController::OnDialogueChoiceSelected, 1);
 			EnhancedInputComponent->BindAction(SelectThirdChoiceAction, ETriggerEvent::Started, this, &ADoomsdayDevicePlayerController::OnDialogueChoiceSelected, 2);
 			EnhancedInputComponent->BindAction(SelectFourthChoiceAction, ETriggerEvent::Started, this, &ADoomsdayDevicePlayerController::OnDialogueChoiceSelected, 3);
+
+			for (int32 SlotIndex = 0; SlotIndex < ToolSlotActions.Num(); ++SlotIndex)
+			{
+				if (ToolSlotActions[SlotIndex])
+				{
+					EnhancedInputComponent->BindAction(ToolSlotActions[SlotIndex], ETriggerEvent::Started, this, &ADoomsdayDevicePlayerController::OnToolSlotPressed, SlotIndex);
+				}
+			}
 		}
 	}
 	
@@ -161,7 +188,21 @@ void ADoomsdayDevicePlayerController::OnInteractionUsed()
 {
 	if (ActiveInteraction.IsValid())
 	{
-		ActiveInteraction->OnUsed.Broadcast();
+		FGameplayTag EquippedToolTag;
+		if (const ADoomsdayDeviceCharacter* PlayerCharacter = Cast<ADoomsdayDeviceCharacter>(GetPawn()))
+		{
+			EquippedToolTag = PlayerCharacter->GetEquippedToolTag();
+		}
+
+		if (ActiveInteraction->IsToolRequirementMet(EquippedToolTag))
+		{
+			ActiveInteraction->OnUsed.Broadcast();
+		}
+		else
+		{
+			ActiveInteraction->OnUseDenied.Broadcast();
+			OnInteractionUseDenied.Broadcast(ActiveInteraction->RequiredToolTag);
+		}
 	}
 	else
 	{
@@ -198,4 +239,21 @@ void ADoomsdayDevicePlayerController::OnDialogueContinued()
 void ADoomsdayDevicePlayerController::OnDialogueChoiceSelected(const FInputActionValue& Value, int32 Index)
 {
 	SelectDialogueChoiceEvent.Broadcast(Index);
+}
+
+void ADoomsdayDevicePlayerController::OnToolSlotPressed(const FInputActionValue& Value, int32 SlotIndex)
+{
+	// keys 1-4 are shared with the dialogue choice actions; dialogue wins while its screen is open
+	if (const UBasicUIManager* UIManager = GetLocalPlayer()->GetSubsystem<UBasicUIManager>())
+	{
+		if (UIManager->IsWidgetOpen(GetDefault<UPlayerSettings>()->DialogueWidget))
+		{
+			return;
+		}
+	}
+
+	if (ADoomsdayDeviceCharacter* PlayerCharacter = Cast<ADoomsdayDeviceCharacter>(GetPawn()))
+	{
+		PlayerCharacter->ToggleToolSlot(SlotIndex);
+	}
 }

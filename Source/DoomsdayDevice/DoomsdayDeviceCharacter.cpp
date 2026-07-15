@@ -11,8 +11,15 @@
 #include "Engine/World.h"
 #include "DoomsdayDevice.h"
 
+#include "Engine/GameInstance.h"
+#include "Engine/LocalPlayer.h"
+
 #include "FlowComponent.h"
 #include "Gameplay/CarryableComponent.h"
+#include "Gameplay/InventorySubsystem.h"
+#include "Gameplay/ToolActor.h"
+#include "Player/BasicUIManager.h"
+#include "Player/PlayerSettings.h"
 #include "Player/PlayerTags.h"
 
 ADoomsdayDeviceCharacter::ADoomsdayDeviceCharacter()
@@ -57,8 +64,44 @@ ADoomsdayDeviceCharacter::ADoomsdayDeviceCharacter()
 	CarryAttachPoint->SetRelativeLocation(FVector(75.0f, 0.0f, 10.0f));
 }
 
+void ADoomsdayDeviceCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+
+	if (UGameInstance* GameInstance = GetGameInstance())
+	{
+		if (UInventorySubsystem* Inventory = GameInstance->GetSubsystem<UInventorySubsystem>())
+		{
+			Inventory->OnItemCollected.AddUObject(this, &ADoomsdayDeviceCharacter::HandleItemCollected);
+		}
+	}
+}
+
+void ADoomsdayDeviceCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	if (const UGameInstance* GameInstance = GetGameInstance())
+	{
+		if (UInventorySubsystem* Inventory = GameInstance->GetSubsystem<UInventorySubsystem>())
+		{
+			Inventory->OnItemCollected.RemoveAll(this);
+		}
+	}
+
+	for (AToolActor* Tool : ToolActors)
+	{
+		if (Tool)
+		{
+			Tool->Destroy();
+		}
+	}
+	ToolActors.Empty();
+	EquippedToolSlot = INDEX_NONE;
+
+	Super::EndPlay(EndPlayReason);
+}
+
 void ADoomsdayDeviceCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{	
+{
 	// Set up action bindings
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
 	{
@@ -155,6 +198,9 @@ void ADoomsdayDeviceCharacter::StartCarry(UCarryableComponent* Item)
 		return;
 	}
 
+	// hands are busy while carrying: stow any equipped tool
+	UnequipTool();
+
 	// Disable() first: removes the item from the controller's interaction candidates
 	// (PlayerTick dereferences them unchecked) and keeps it from hogging ActiveInteraction
 	// while glued to the player
@@ -224,4 +270,135 @@ void ADoomsdayDeviceCharacter::DropCarriedItem()
 	}
 
 	Item->Enable();
+}
+
+void ADoomsdayDeviceCharacter::ToggleToolSlot(const int32 SlotIndex)
+{
+	const TArray<FToolSlotDefinition>& ToolSlots = GetDefault<UPlayerSettings>()->ToolSlots;
+	if (!ToolSlots.IsValidIndex(SlotIndex) || IsCarrying() || !IsToolSlotUnlocked(SlotIndex))
+	{
+		return;
+	}
+
+	if (EquippedToolSlot == SlotIndex)
+	{
+		UnequipTool();
+		return;
+	}
+
+	AToolActor* Tool = GetOrSpawnToolActor(SlotIndex);
+	if (!Tool)
+	{
+		return;
+	}
+
+	// hide the previous tool directly - a single equip notification goes out below
+	if (ToolActors.IsValidIndex(EquippedToolSlot) && ToolActors[EquippedToolSlot])
+	{
+		ToolActors[EquippedToolSlot]->SetActorHiddenInGame(true);
+	}
+
+	Tool->SetActorHiddenInGame(false);
+	EquippedToolSlot = SlotIndex;
+
+	if (UBasicUIManager* UIManager = GetUIManager())
+	{
+		UIManager->NotifyEquippedToolChanged(EquippedToolSlot);
+	}
+}
+
+void ADoomsdayDeviceCharacter::UnequipTool()
+{
+	if (EquippedToolSlot == INDEX_NONE)
+	{
+		return;
+	}
+
+	if (ToolActors.IsValidIndex(EquippedToolSlot) && ToolActors[EquippedToolSlot])
+	{
+		ToolActors[EquippedToolSlot]->SetActorHiddenInGame(true);
+	}
+	EquippedToolSlot = INDEX_NONE;
+
+	if (UBasicUIManager* UIManager = GetUIManager())
+	{
+		UIManager->NotifyEquippedToolChanged(INDEX_NONE);
+	}
+}
+
+FGameplayTag ADoomsdayDeviceCharacter::GetEquippedToolTag() const
+{
+	const TArray<FToolSlotDefinition>& ToolSlots = GetDefault<UPlayerSettings>()->ToolSlots;
+	return ToolSlots.IsValidIndex(EquippedToolSlot) ? ToolSlots[EquippedToolSlot].ToolTag : FGameplayTag();
+}
+
+bool ADoomsdayDeviceCharacter::IsToolSlotUnlocked(const int32 SlotIndex) const
+{
+	const TArray<FToolSlotDefinition>& ToolSlots = GetDefault<UPlayerSettings>()->ToolSlots;
+	if (!ToolSlots.IsValidIndex(SlotIndex))
+	{
+		return false;
+	}
+
+	const UGameInstance* GameInstance = GetGameInstance();
+	const UInventorySubsystem* Inventory = GameInstance ? GameInstance->GetSubsystem<UInventorySubsystem>() : nullptr;
+	return Inventory && Inventory->HasItem(ToolSlots[SlotIndex].ToolTag);
+}
+
+void ADoomsdayDeviceCharacter::HandleItemCollected(const FGameplayTag& ItemTag, int32 /*NewCount*/)
+{
+	const TArray<FToolSlotDefinition>& ToolSlots = GetDefault<UPlayerSettings>()->ToolSlots;
+	for (int32 SlotIndex = 0; SlotIndex < ToolSlots.Num(); ++SlotIndex)
+	{
+		if (ItemTag.MatchesTag(ToolSlots[SlotIndex].ToolTag))
+		{
+			if (UBasicUIManager* UIManager = GetUIManager())
+			{
+				UIManager->NotifyToolSlotUnlocked(SlotIndex);
+			}
+		}
+	}
+}
+
+AToolActor* ADoomsdayDeviceCharacter::GetOrSpawnToolActor(const int32 SlotIndex)
+{
+	const TArray<FToolSlotDefinition>& ToolSlots = GetDefault<UPlayerSettings>()->ToolSlots;
+	if (ToolActors.Num() < ToolSlots.Num())
+	{
+		ToolActors.SetNum(ToolSlots.Num());
+	}
+
+	if (ToolActors[SlotIndex])
+	{
+		return ToolActors[SlotIndex];
+	}
+
+	UClass* ToolClass = ToolSlots[SlotIndex].ToolActorClass.LoadSynchronous();
+	if (!ToolClass)
+	{
+		UE_LOG(LogDoomsdayDevice, Warning, TEXT("Tool slot %d has no valid ToolActorClass"), SlotIndex);
+		return nullptr;
+	}
+
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.Owner = this; // OnlyOwnerSee on the tool mesh keys off the owner chain
+	SpawnParams.Instigator = this;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+	AToolActor* Tool = GetWorld()->SpawnActor<AToolActor>(ToolClass, GetActorTransform(), SpawnParams);
+	if (Tool)
+	{
+		Tool->AttachToComponent(FirstPersonMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, ToolHandSocketName);
+		Tool->SetActorHiddenInGame(true);
+		ToolActors[SlotIndex] = Tool;
+	}
+
+	return Tool;
+}
+
+UBasicUIManager* ADoomsdayDeviceCharacter::GetUIManager() const
+{
+	const APlayerController* PlayerController = Cast<APlayerController>(GetController());
+	const ULocalPlayer* LocalPlayer = PlayerController ? PlayerController->GetLocalPlayer() : nullptr;
+	return LocalPlayer ? LocalPlayer->GetSubsystem<UBasicUIManager>() : nullptr;
 }

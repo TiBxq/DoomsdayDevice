@@ -7,6 +7,7 @@
 
 #include "Player/PlayerSettings.h"
 #include "UI/DialogueWidget.h"
+#include "UI/ToolSlotsWidget.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(BasicUIManager)
 
@@ -22,7 +23,7 @@ void UBasicUIManager::OpenWidget(const TSoftClassPtr<UUserWidget> SoftClass)
 	}
 
 	UClass* WidgetClass = SoftClass.LoadSynchronous();
-	if (WidgetClass->HasAnyClassFlags(CLASS_Abstract))
+	if (!WidgetClass || WidgetClass->HasAnyClassFlags(CLASS_Abstract))
 	{
 		return;
 	}
@@ -51,6 +52,11 @@ void UBasicUIManager::ToggleWidget(const TSoftClassPtr<UUserWidget> SoftClass)
 	{
 		OpenWidget(SoftClass);
 	}
+}
+
+bool UBasicUIManager::IsWidgetOpen(const TSoftClassPtr<UUserWidget> SoftClass) const
+{
+	return OpenedWidgets.Contains(SoftClass);
 }
 
 void UBasicUIManager::HideWidgets()
@@ -104,6 +110,37 @@ bool UBasicUIManager::SkipDialogueLineReveal()
 		return Widget->SkipReveal();
 	}
 	return false;
+}
+
+void UBasicUIManager::NotifyToolSlotUnlocked(const int32 SlotIndex)
+{
+	if (UToolSlotsWidget* Widget = GetToolSlotsWidget(true))
+	{
+		Widget->SetSlotUnlocked(SlotIndex);
+	}
+}
+
+void UBasicUIManager::NotifyEquippedToolChanged(const int32 NewSlotIndex)
+{
+	// equipping requires an unlocked slot, and unlocking opened the bar; if it is
+	// currently closed (e.g. hidden for a cutscene) don't force it back open -
+	// reopening re-pulls the selection state anyway
+	if (UToolSlotsWidget* Widget = GetToolSlotsWidget(false))
+	{
+		Widget->SetEquippedSlot(NewSlotIndex);
+	}
+}
+
+UToolSlotsWidget* UBasicUIManager::GetToolSlotsWidget(const bool bOpenIfNeeded)
+{
+	const TSoftClassPtr<UUserWidget> ToolSlotsWidgetClass = GetDefault<UPlayerSettings>()->ToolSlotsWidget;
+
+	if (bOpenIfNeeded && !OpenedWidgets.Contains(ToolSlotsWidgetClass))
+	{
+		OpenWidget(ToolSlotsWidgetClass);
+	}
+
+	return Cast<UToolSlotsWidget>(OpenedWidgets.FindRef(ToolSlotsWidgetClass));
 }
 
 UDialogueWidget* UBasicUIManager::GetDialogueWidget(const bool bOpenIfNeeded)

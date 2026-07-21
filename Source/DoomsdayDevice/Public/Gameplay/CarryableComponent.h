@@ -36,6 +36,9 @@ public:
 
 	void SetCurrentSlot(UItemSlotComponent* Slot);
 
+	UFUNCTION(BlueprintImplementableEvent, Category = "Carry")
+	void OnDropped();
+
 protected:
 	TWeakObjectPtr<UItemSlotComponent> CurrentSlot;
 

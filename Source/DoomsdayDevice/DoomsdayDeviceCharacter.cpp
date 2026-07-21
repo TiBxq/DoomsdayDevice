@@ -270,6 +270,7 @@ void ADoomsdayDeviceCharacter::DropCarriedItem()
 	}
 
 	Item->Enable();
+	Item->OnDropped();
 }
 
 void ADoomsdayDeviceCharacter::ToggleToolSlot(const int32 SlotIndex)

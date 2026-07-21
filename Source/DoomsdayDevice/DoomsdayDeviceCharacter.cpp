@@ -205,6 +205,7 @@ void ADoomsdayDeviceCharacter::StartCarry(UCarryableComponent* Item)
 	// (PlayerTick dereferences them unchecked) and keeps it from hogging ActiveInteraction
 	// while glued to the player
 	Item->Disable();
+	Item->OnStartCarry();
 
 	if (UPrimitiveComponent* RootPrimitive = Cast<UPrimitiveComponent>(ItemActor->GetRootComponent()))
 	{

@@ -39,6 +39,9 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category = "Carry")
 	void OnDropped();
 
+	UFUNCTION(BlueprintImplementableEvent, Category = "Carry")
+	void OnStartCarry();
+
 protected:
 	TWeakObjectPtr<UItemSlotComponent> CurrentSlot;
 

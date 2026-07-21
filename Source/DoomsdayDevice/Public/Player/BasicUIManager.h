@@ -8,6 +8,7 @@ class UUserWidget;
 class UDialogSpeakerDataAsset;
 class UDialogueWidget;
 class UToolSlotsWidget;
+class UHUDWidget;
 
 /**
  *
@@ -36,6 +37,10 @@ public:
 	void HideWidgets();
 	void RestoreWidgets();
 
+	// ----------- HUD --------------------
+
+	void DisplayHUD();
+
 	// ----------- Dialogue ---------------
 	void DisplayDialogueLine(const FText& LineText, TObjectPtr<UDialogSpeakerDataAsset> SpeakerData);
 
@@ -55,4 +60,5 @@ public:
 private:
 	UDialogueWidget* GetDialogueWidget(bool bOpenIfNeeded);
 	UToolSlotsWidget* GetToolSlotsWidget(bool bOpenIfNeeded);
+	UHUDWidget* GetHUDWidget(bool bOpenIfNeeded);
 };

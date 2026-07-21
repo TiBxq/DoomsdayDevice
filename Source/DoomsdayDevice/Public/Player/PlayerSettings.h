@@ -15,14 +15,18 @@ UCLASS(Config = Game, defaultconfig, meta = (DisplayName = "Player"))
 class UPlayerSettings final : public UDeveloperSettings
 {
 	GENERATED_UCLASS_BODY()
-	UPROPERTY(Config, EditAnywhere, Category = "Input")
+
+	UPROPERTY(Config, EditAnywhere, Category = "Widgets")
 	TSoftClassPtr<UUserWidget> InteractionWidget;
 
-	UPROPERTY(Config, EditAnywhere, Category = "Input")
+	UPROPERTY(Config, EditAnywhere, Category = "Widgets")
 	TSoftClassPtr<UUserWidget> DialogueWidget;
 
-	UPROPERTY(Config, EditAnywhere, Category = "Input")
+	UPROPERTY(Config, EditAnywhere, Category = "Widgets")
 	TSoftClassPtr<UUserWidget> ToolSlotsWidget;
+
+	UPROPERTY(Config, EditAnywhere, Category = "Widgets")
+	TSoftClassPtr<UUserWidget> HUDWidget;
 
 	/** Static tool slots; index = hotkey number - 1. Slots unlock when their ToolTag is collected. */
 	UPROPERTY(Config, EditAnywhere, Category = "Tools")

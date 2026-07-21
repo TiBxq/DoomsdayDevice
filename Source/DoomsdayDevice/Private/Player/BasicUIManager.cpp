@@ -8,6 +8,7 @@
 #include "Player/PlayerSettings.h"
 #include "UI/DialogueWidget.h"
 #include "UI/ToolSlotsWidget.h"
+#include "UI/HUDWidget.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(BasicUIManager)
 
@@ -77,6 +78,11 @@ void UBasicUIManager::RestoreWidgets()
 		OpenWidget(WidgetClass);
 	}
 	HiddenWidgets.Empty();
+}
+
+void UBasicUIManager::DisplayHUD()
+{
+	GetHUDWidget(true); // widget will be created if it doesn't exist
 }
 
 void UBasicUIManager::DisplayDialogueLine(const FText& LineText, TObjectPtr<UDialogSpeakerDataAsset> SpeakerData)
@@ -153,4 +159,16 @@ UDialogueWidget* UBasicUIManager::GetDialogueWidget(const bool bOpenIfNeeded)
 	}
 
 	return Cast<UDialogueWidget>(OpenedWidgets.FindRef(DialogueWidgetClass));
+}
+
+UHUDWidget* UBasicUIManager::GetHUDWidget(bool bOpenIfNeeded)
+{
+	const TSoftClassPtr<UUserWidget> HUDWidgetClass = GetDefault<UPlayerSettings>()->HUDWidget;
+
+	if (bOpenIfNeeded && !OpenedWidgets.Contains(HUDWidgetClass))
+	{
+		OpenWidget(HUDWidgetClass);
+	}
+
+	return Cast<UHUDWidget>(OpenedWidgets.FindRef(HUDWidgetClass));
 }

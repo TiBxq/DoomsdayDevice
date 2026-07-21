@@ -58,12 +58,17 @@ void ADoomsdayDevicePlayerController::BeginPlay()
 		const UInventorySubsystem* Inventory = GetGameInstance() ? GetGameInstance()->GetSubsystem<UInventorySubsystem>() : nullptr;
 		if (Inventory)
 		{
-			for (const FToolSlotDefinition& Slot : GetDefault<UPlayerSettings>()->ToolSlots)
+			if (UBasicUIManager* UIManager = GetLocalPlayer()->GetSubsystem<UBasicUIManager>())
 			{
-				if (Inventory->HasItem(Slot.ToolTag))
+				UIManager->DisplayHUD();
+
+				for (const FToolSlotDefinition& Slot : GetDefault<UPlayerSettings>()->ToolSlots)
 				{
-					GetLocalPlayer()->GetSubsystem<UBasicUIManager>()->OpenWidget(GetDefault<UPlayerSettings>()->ToolSlotsWidget);
-					break;
+					if (Inventory->HasItem(Slot.ToolTag))
+					{
+						UIManager->OpenWidget(GetDefault<UPlayerSettings>()->ToolSlotsWidget);
+						break;
+					}
 				}
 			}
 		}

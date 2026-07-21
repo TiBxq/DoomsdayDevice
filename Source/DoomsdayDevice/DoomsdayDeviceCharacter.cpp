@@ -219,6 +219,7 @@ void ADoomsdayDeviceCharacter::StartCarry(UCarryableComponent* Item)
 	// the precise-interaction visibility traces (they only ignore the pawn)
 	ItemActor->SetActorEnableCollision(false);
 	ItemActor->AttachToComponent(CarryAttachPoint, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+	ItemActor->SetActorRelativeLocation(Item->CarryOffset);
 
 	CachedWalkSpeed = GetCharacterMovement()->MaxWalkSpeed;
 	GetCharacterMovement()->MaxWalkSpeed = CachedWalkSpeed * Item->CarrySpeedMultiplier;

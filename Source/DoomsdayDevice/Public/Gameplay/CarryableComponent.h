@@ -28,6 +28,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Carry", meta = (ClampMin = 0.05, ClampMax = 1.0))
 	float CarrySpeedMultiplier;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Carry")
+	FVector CarryOffset;
+
 	virtual void BeginPlay() override;
 
 	UFUNCTION(BlueprintPure, Category = "Carry")

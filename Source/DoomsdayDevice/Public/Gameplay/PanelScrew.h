@@ -29,6 +29,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Screw", meta = (ClampMin = 0.0))
 	float EjectSpin;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Screw")
+	FName EjectedProfileName;
+
 	UPROPERTY(BlueprintAssignable, Category = "Screw")
 	FPanelScrewEvent OnEjected;
 

@@ -36,6 +36,8 @@ APanelScrew::APanelScrew()
 	InteractionComponent = CreateDefaultSubobject<UScrewInteractionComponent>(TEXT("Interaction"));
 	InteractionComponent->SetupAttachment(MeshComponent);
 	InteractionComponent->Distance = 150.0f;
+
+	EjectedProfileName = UCollisionProfile::PhysicsActor_ProfileName;
 }
 
 void APanelScrew::Eject()
@@ -52,7 +54,7 @@ void APanelScrew::Eject()
 
 	DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 
-	MeshComponent->SetCollisionProfileName(UCollisionProfile::PhysicsActor_ProfileName);
+	MeshComponent->SetCollisionProfileName(EjectedProfileName);
 	MeshComponent->SetSimulatePhysics(true);
 	MeshComponent->AddImpulse(GetScrewAxis() * EjectSpeed, NAME_None, /*bVelChange*/ true);
 	MeshComponent->AddAngularImpulseInRadians(FMath::VRand() * EjectSpin, NAME_None, /*bVelChange*/ true);

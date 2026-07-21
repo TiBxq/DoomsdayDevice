@@ -6,6 +6,8 @@
 
 class UItemSlotComponent;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FCarryEvent);
+
 /**
  * Interaction that makes its owner a heavy item the player carries in hands.
  * While carried the owner is attached to the player and movement is slowed.
@@ -36,11 +38,11 @@ public:
 
 	void SetCurrentSlot(UItemSlotComponent* Slot);
 
-	UFUNCTION(BlueprintImplementableEvent, Category = "Carry")
-	void OnDropped();
+	UPROPERTY(BlueprintAssignable, Category = "Carry")
+	FCarryEvent OnDropped;
 
-	UFUNCTION(BlueprintImplementableEvent, Category = "Carry")
-	void OnStartCarry();
+	UPROPERTY(BlueprintAssignable, Category = "Carry")
+	FCarryEvent OnStartCarry;
 
 protected:
 	TWeakObjectPtr<UItemSlotComponent> CurrentSlot;

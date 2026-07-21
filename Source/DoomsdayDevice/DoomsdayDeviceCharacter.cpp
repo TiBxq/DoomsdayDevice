@@ -205,7 +205,7 @@ void ADoomsdayDeviceCharacter::StartCarry(UCarryableComponent* Item)
 	// (PlayerTick dereferences them unchecked) and keeps it from hogging ActiveInteraction
 	// while glued to the player
 	Item->Disable();
-	Item->OnStartCarry();
+	Item->OnStartCarry.Broadcast();
 
 	if (UPrimitiveComponent* RootPrimitive = Cast<UPrimitiveComponent>(ItemActor->GetRootComponent()))
 	{
@@ -271,7 +271,7 @@ void ADoomsdayDeviceCharacter::DropCarriedItem()
 	}
 
 	Item->Enable();
-	Item->OnDropped();
+	Item->OnDropped.Broadcast();
 }
 
 void ADoomsdayDeviceCharacter::ToggleToolSlot(const int32 SlotIndex)

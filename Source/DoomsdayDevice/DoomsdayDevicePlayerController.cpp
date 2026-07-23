@@ -193,14 +193,17 @@ void ADoomsdayDevicePlayerController::OnInteractionUsed()
 {
 	if (ActiveInteraction.IsValid())
 	{
-		FGameplayTag EquippedToolTag;
-		if (const ADoomsdayDeviceCharacter* PlayerCharacter = Cast<ADoomsdayDeviceCharacter>(GetPawn()))
-		{
-			EquippedToolTag = PlayerCharacter->GetEquippedToolTag();
-		}
+		ADoomsdayDeviceCharacter* PlayerCharacter = Cast<ADoomsdayDeviceCharacter>(GetPawn());
+		const FGameplayTag EquippedToolTag = PlayerCharacter ? PlayerCharacter->GetEquippedToolTag() : FGameplayTag();
 
 		if (ActiveInteraction->IsToolRequirementMet(EquippedToolTag))
 		{
+			// animate only for interactions that actually required a tool; the matched tool is guaranteed equipped here
+			if (PlayerCharacter && ActiveInteraction->RequiredToolTag.IsValid())
+			{
+				PlayerCharacter->PlayEquippedToolUseMontage();
+			}
+
 			ActiveInteraction->OnUsed.Broadcast();
 		}
 		else

@@ -12,6 +12,7 @@ class UInputComponent;
 class USkeletalMeshComponent;
 class UCameraComponent;
 class UInputAction;
+class UAnimInstance;
 struct FInputActionValue;
 
 class UFlowComponent;
@@ -133,6 +134,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Tools")
 	void UnequipTool();
 
+	/** Plays the equipped tool's use montage on the first-person arms. No-op with empty hands or no montage. */
+	UFUNCTION(BlueprintCallable, Category = "Tools")
+	void PlayEquippedToolUseMontage();
+
 	/** Currently equipped slot index; INDEX_NONE for empty hands */
 	UFUNCTION(BlueprintPure, Category = "Tools")
 	int32 GetEquippedToolSlot() const { return EquippedToolSlot; }
@@ -165,6 +170,13 @@ private:
 	TArray<TObjectPtr<AToolActor>> ToolActors;
 
 	int32 EquippedToolSlot = INDEX_NONE;
+
+	/** Arms AnimBP assigned in the Blueprint; captured on BeginPlay and restored when a tool is unequipped */
+	UPROPERTY()
+	TSubclassOf<UAnimInstance> DefaultFirstPersonAnimClass;
+
+	UPROPERTY()
+	TSubclassOf<UAnimInstance> DefaultThirdPersonAnimClass;
 
 	void HandleItemCollected(const FGameplayTag& ItemTag, int32 NewCount);
 

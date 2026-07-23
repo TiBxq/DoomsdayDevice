@@ -2,6 +2,7 @@
 
 #include "DoomsdayDeviceCharacter.h"
 #include "Animation/AnimInstance.h"
+#include "Animation/AnimMontage.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
@@ -67,6 +68,10 @@ ADoomsdayDeviceCharacter::ADoomsdayDeviceCharacter()
 void ADoomsdayDeviceCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	// remember the arms AnimBP assigned in the Blueprint so we can restore it when a tool is unequipped
+	DefaultFirstPersonAnimClass = FirstPersonMesh->GetAnimClass();
+	DefaultThirdPersonAnimClass = GetMesh()->GetAnimClass();
 
 	if (UGameInstance* GameInstance = GetGameInstance())
 	{
@@ -304,6 +309,17 @@ void ADoomsdayDeviceCharacter::ToggleToolSlot(const int32 SlotIndex)
 	Tool->SetActorHiddenInGame(false);
 	EquippedToolSlot = SlotIndex;
 
+	// swap the arms to this tool's holding pose (falling back to the default if the tool has none)
+	{
+		const TSubclassOf<UAnimInstance> ToolAnim = Tool->GetFirstPersonAnimInstanceClass();
+		FirstPersonMesh->SetAnimInstanceClass(ToolAnim ? ToolAnim : DefaultFirstPersonAnimClass);
+	}
+
+	{
+		const TSubclassOf<UAnimInstance> ToolAnimTP = Tool->GetThirdPersonAnimInstanceClass();
+		GetMesh()->SetAnimInstanceClass(ToolAnimTP ? ToolAnimTP : DefaultFirstPersonAnimClass);
+	}
+
 	if (UBasicUIManager* UIManager = GetUIManager())
 	{
 		UIManager->NotifyEquippedToolChanged(EquippedToolSlot);
@@ -323,9 +339,33 @@ void ADoomsdayDeviceCharacter::UnequipTool()
 	}
 	EquippedToolSlot = INDEX_NONE;
 
+	// return the arms to their default (empty-hands) pose
+	FirstPersonMesh->SetAnimInstanceClass(DefaultFirstPersonAnimClass);
+	GetMesh()->SetAnimInstanceClass(DefaultThirdPersonAnimClass);
+
 	if (UBasicUIManager* UIManager = GetUIManager())
 	{
 		UIManager->NotifyEquippedToolChanged(INDEX_NONE);
+	}
+}
+
+void ADoomsdayDeviceCharacter::PlayEquippedToolUseMontage()
+{
+	if (EquippedToolSlot == INDEX_NONE || !ToolActors.IsValidIndex(EquippedToolSlot))
+	{
+		return;
+	}
+
+	const AToolActor* Tool = ToolActors[EquippedToolSlot];
+	UAnimMontage* Montage = Tool ? Tool->GetUseMontage() : nullptr;
+	if (!Montage)
+	{
+		return;
+	}
+
+	if (UAnimInstance* AnimInstance = FirstPersonMesh->GetAnimInstance())
+	{
+		AnimInstance->Montage_Play(Montage);
 	}
 }
 
@@ -391,7 +431,15 @@ AToolActor* ADoomsdayDeviceCharacter::GetOrSpawnToolActor(const int32 SlotIndex)
 	AToolActor* Tool = GetWorld()->SpawnActor<AToolActor>(ToolClass, GetActorTransform(), SpawnParams);
 	if (Tool)
 	{
-		Tool->AttachToComponent(FirstPersonMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, ToolHandSocketName);
+		const FAttachmentTransformRules AttachmentRule(EAttachmentRule::SnapToTarget, false);
+
+		// attach the weapon actor
+		Tool->AttachToActor(this, AttachmentRule);
+
+		// attach the weapon meshes
+		Tool->GetMesh()->AttachToComponent(GetFirstPersonMesh(), AttachmentRule, ToolHandSocketName);
+		Tool->GetThirdPersonMesh()->AttachToComponent(GetMesh(), AttachmentRule, ToolHandSocketName);
+
 		Tool->SetActorHiddenInGame(true);
 		ToolActors[SlotIndex] = Tool;
 	}

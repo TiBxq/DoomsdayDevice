@@ -8,15 +8,20 @@
 
 #include "FactsDBSubsystem.generated.h"
 
+DECLARE_MULTICAST_DELEGATE_TwoParams(FFactChangedEvent, const FGameplayTag& /*Tag*/, int32 /*NewValue*/);
+
 /**
- * 
+ *
  */
 UCLASS()
 class DOOMSDAYDEVICE_API UFactsDBSubsystem : public UGameInstanceSubsystem
 {
 	GENERATED_BODY()
-	
+
 public:
+	/** Broadcast whenever a fact's value is set or changed (AddFact / IncrementFact). */
+	FFactChangedEvent OnFactChanged;
+
 	UFUNCTION(BlueprintCallable)
 	void AddFact(const FGameplayTag& Tag, const int32 Value);
 

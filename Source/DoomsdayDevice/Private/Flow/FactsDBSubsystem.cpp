@@ -6,11 +6,13 @@
 void UFactsDBSubsystem::AddFact(const FGameplayTag& Tag, const int32 Value)
 {
 	Facts.Add(Tag, Value);
+	OnFactChanged.Broadcast(Tag, Value);
 }
 
 void UFactsDBSubsystem::IncrementFact(const FGameplayTag& Tag, const int32 Value)
 {
-	Facts.FindOrAdd(Tag) += Value;
+	const int32 NewValue = (Facts.FindOrAdd(Tag) += Value);
+	OnFactChanged.Broadcast(Tag, NewValue);
 }
 
 void UFactsDBSubsystem::RemoveFact(const FGameplayTag& Tag)

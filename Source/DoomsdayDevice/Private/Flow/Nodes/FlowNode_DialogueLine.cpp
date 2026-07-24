@@ -43,6 +43,11 @@ void UFlowNode_DialogueLine::Cleanup()
 	Super::Cleanup();
 }
 
+void UFlowNode_DialogueLine::OnDialogueLineCompleted()
+{
+	TriggerOutput(TEXT("Completed"), true);
+}
+
 #if WITH_EDITOR 
 FString UFlowNode_DialogueLine::GetNodeDescription() const
 {
@@ -53,12 +58,6 @@ EDataValidationResult UFlowNode_DialogueLine::ValidateNode()
 {
 	return EDataValidationResult::Valid;
 }
-#endif
-
-void UFlowNode_DialogueLine::OnDialogueLineCompleted()
-{
-	TriggerOutput(TEXT("Completed"), true);
-}
 
 void UFlowNode_DialogueLine::UpdateNodeConfigText_Implementation()
 {
@@ -67,3 +66,5 @@ void UFlowNode_DialogueLine::UpdateNodeConfigText_Implementation()
 		SetNodeConfigText(FText::Format(LOCTEXT("DialogueLineInfo", "Speaker: {0}"), { SpeakerData->DisplayName }));
 	}
 }
+
+#endif

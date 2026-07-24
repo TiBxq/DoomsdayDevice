@@ -28,6 +28,9 @@ class UPlayerSettings final : public UDeveloperSettings
 	UPROPERTY(Config, EditAnywhere, Category = "Widgets")
 	TSoftClassPtr<UUserWidget> HUDWidget;
 
+	UPROPERTY(Config, EditAnywhere, Category = "Widgets")
+	TSoftClassPtr<UUserWidget> DialogueHintWidget;
+
 	/** Static tool slots; index = hotkey number - 1. Slots unlock when their ToolTag is collected. */
 	UPROPERTY(Config, EditAnywhere, Category = "Tools")
 	TArray<FToolSlotDefinition> ToolSlots;

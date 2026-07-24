@@ -15,6 +15,7 @@ class UInputAction;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FContinueDialogueEvent);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FSelectDialogueChoiceEvent, int32, Index);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInteractionUseDeniedEvent, FGameplayTag, RequiredToolTag);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FDialogueHintEvent);
 
 /**
  *  Simple first person Player Controller
@@ -36,6 +37,10 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "Dialogue")
 	FSelectDialogueChoiceEvent SelectDialogueChoiceEvent;
+
+	/** Fired when the player presses the hint input while a hint is on screen (bound by FlowNode_DialogueHintTriggered). */
+	UPROPERTY(BlueprintAssignable, Category = "Dialogue")
+	FDialogueHintEvent DialogueHintEvent;
 
 	/** Fired when Use is pressed on an interaction whose required tool is not in hand (for UI feedback). */
 	UPROPERTY(BlueprintAssignable, Category = "Interaction")
@@ -89,8 +94,18 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Input")
 	TArray<UInputAction*> ToolSlotActions;
 
+	UPROPERTY(EditAnywhere, Category = "Input")
+	UInputAction* DialogueHintAction;
+
+	/** Fact whose value gates the hint widget/input: 0 = none, N = hint N. Set to Flow.Facts.HintAvailable. */
+	UPROPERTY(EditAnywhere, Category = "Dialogue")
+	FGameplayTag HintFactTag;
+
 	/** Gameplay initialization */
 	virtual void BeginPlay() override;
+
+	/** Unsubscribe from the game-instance-scoped facts delegate */
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	/** Input mapping context setup */
 	virtual void SetupInputComponent() override;
@@ -120,6 +135,12 @@ private:
 
 	UFUNCTION()
 	void OnDialogueChoiceSelected(const FInputActionValue& Value, int32 Index);
+
+	UFUNCTION()
+	void OnDialogueHintUsed();
+
+	/** Reacts to the "hint available" fact changing: shows/hides the hint widget. */
+	void OnHintFactChanged(const FGameplayTag& ChangedTag, int32 NewValue);
 
 	// -------------- Tools ------------------
 	UFUNCTION()

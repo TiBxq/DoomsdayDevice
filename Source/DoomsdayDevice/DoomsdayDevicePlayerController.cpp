@@ -14,6 +14,7 @@
 
 #include "Gameplay/InteractionComponent.h"
 #include "Gameplay/InventorySubsystem.h"
+#include "Flow/FactsDBSubsystem.h"
 #include "Player/BasicUIManager.h"
 #include "Player/PlayerSettings.h"
 #include "Player/PlayerTags.h"
@@ -72,7 +73,30 @@ void ADoomsdayDevicePlayerController::BeginPlay()
 				}
 			}
 		}
+
+		// drive the dialogue hint widget from the "hint available" fact
+		if (UFactsDBSubsystem* FactsDB = GetGameInstance() ? GetGameInstance()->GetSubsystem<UFactsDBSubsystem>() : nullptr)
+		{
+			FactsDB->OnFactChanged.RemoveAll(this);
+			FactsDB->OnFactChanged.AddUObject(this, &ADoomsdayDevicePlayerController::OnHintFactChanged);
+
+			if (HintFactTag.IsValid())
+			{
+				// sync initial visibility (e.g. after a level transition where the fact is already set)
+				OnHintFactChanged(HintFactTag, FactsDB->GetFactValue(HintFactTag));
+			}
+		}
 	}
+}
+
+void ADoomsdayDevicePlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	if (UFactsDBSubsystem* FactsDB = GetGameInstance() ? GetGameInstance()->GetSubsystem<UFactsDBSubsystem>() : nullptr)
+	{
+		FactsDB->OnFactChanged.RemoveAll(this);
+	}
+
+	Super::EndPlay(EndPlayReason);
 }
 
 void ADoomsdayDevicePlayerController::SetupInputComponent()
@@ -108,6 +132,7 @@ void ADoomsdayDevicePlayerController::SetupInputComponent()
 				EnhancedInputComponent->BindAction(DropAction, ETriggerEvent::Started, this, &ADoomsdayDevicePlayerController::OnDropUsed);
 			}
 			EnhancedInputComponent->BindAction(ContinueDialogueAction, ETriggerEvent::Started, this, &ADoomsdayDevicePlayerController::OnDialogueContinued);
+			EnhancedInputComponent->BindAction(DialogueHintAction, ETriggerEvent::Started, this, &ADoomsdayDevicePlayerController::OnDialogueHintUsed);
 
 			EnhancedInputComponent->BindAction(SelectFirstChoiceAction, ETriggerEvent::Started, this, &ADoomsdayDevicePlayerController::OnDialogueChoiceSelected, 0);
 			EnhancedInputComponent->BindAction(SelectSecondChoiceAction, ETriggerEvent::Started, this, &ADoomsdayDevicePlayerController::OnDialogueChoiceSelected, 1);
@@ -247,6 +272,37 @@ void ADoomsdayDevicePlayerController::OnDialogueContinued()
 void ADoomsdayDevicePlayerController::OnDialogueChoiceSelected(const FInputActionValue& Value, int32 Index)
 {
 	SelectDialogueChoiceEvent.Broadcast(Index);
+}
+
+void ADoomsdayDevicePlayerController::OnDialogueHintUsed()
+{
+	// the hint input is only meaningful while a hint is on screen (widget visibility mirrors the fact)
+	const UBasicUIManager* UIManager = GetLocalPlayer()->GetSubsystem<UBasicUIManager>();
+	if (UIManager && UIManager->IsWidgetOpen(GetDefault<UPlayerSettings>()->DialogueHintWidget))
+	{
+		DialogueHintEvent.Broadcast();
+	}
+}
+
+void ADoomsdayDevicePlayerController::OnHintFactChanged(const FGameplayTag& ChangedTag, int32 NewValue)
+{
+	if (!HintFactTag.IsValid() || ChangedTag != HintFactTag)
+	{
+		return;
+	}
+
+	if (UBasicUIManager* UIManager = GetLocalPlayer()->GetSubsystem<UBasicUIManager>())
+	{
+		const TSoftClassPtr<UUserWidget> HintWidget = GetDefault<UPlayerSettings>()->DialogueHintWidget;
+		if (NewValue > 0)
+		{
+			UIManager->OpenWidget(HintWidget);
+		}
+		else
+		{
+			UIManager->CloseWidget(HintWidget);
+		}
+	}
 }
 
 void ADoomsdayDevicePlayerController::OnToolSlotPressed(const FInputActionValue& Value, int32 SlotIndex)

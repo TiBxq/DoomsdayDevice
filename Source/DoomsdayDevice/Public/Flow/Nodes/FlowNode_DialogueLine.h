@@ -8,6 +8,7 @@
 #include "FlowNode_DialogueLine.generated.h"
 
 class UDialogSpeakerDataAsset;
+class USoundBase;
 
 /**
  * 
@@ -26,6 +27,10 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "Dialogue")
 	TObjectPtr<UDialogSpeakerDataAsset> SpeakerData;
+
+	/** Optional voice-over, played 2D when the line appears. The first continue press stops it. */
+	UPROPERTY(EditAnywhere, Category = "Dialogue")
+	TSoftObjectPtr<USoundBase> VoiceOver;
 
 protected:
 	virtual void ExecuteInput(const FName& PinName) override;

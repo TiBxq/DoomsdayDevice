@@ -5,6 +5,10 @@
 #include "Blueprint/UserWidget.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
 
+#include "Components/AudioComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "Sound/SoundBase.h"
+
 #include "Player/PlayerSettings.h"
 #include "UI/DialogueWidget.h"
 #include "UI/ToolSlotsWidget.h"
@@ -85,12 +89,32 @@ void UBasicUIManager::DisplayHUD()
 	GetHUDWidget(true); // widget will be created if it doesn't exist
 }
 
-void UBasicUIManager::DisplayDialogueLine(const FText& LineText, TObjectPtr<UDialogSpeakerDataAsset> SpeakerData)
+void UBasicUIManager::DisplayDialogueLine(const FText& LineText, TObjectPtr<UDialogSpeakerDataAsset> SpeakerData, USoundBase* VoiceOver)
 {
-	if (UDialogueWidget* Widget = GetDialogueWidget(true))
+	// Resolve the widget first so the first line's synchronous widget-class load doesn't offset the audio.
+	UDialogueWidget* Widget = GetDialogueWidget(true);
+	if (!Widget)
 	{
-		Widget->AddDialogueLine(LineText, SpeakerData);
+		return;
 	}
+
+	StopDialogueVoice(); // never let a previous line's voice-over overlap the new one
+
+	if (VoiceOver)
+	{
+		if (UWorld* World = GetWorld())
+		{
+			DialogueVoiceComponent = UGameplayStatics::SpawnSound2D(World, VoiceOver, /*VolumeMultiplier*/ 1.f, /*PitchMultiplier*/ 1.f, /*StartTime*/ 0.f, /*ConcurrencySettings*/ nullptr, /*bPersistAcrossLevelTransition*/ false, /*bAutoDestroy*/ false);
+
+			if (DialogueVoiceComponent)
+			{
+				DialogueVoiceComponent->OnAudioFinished.AddDynamic(this, &UBasicUIManager::OnDialogueVoiceFinished);
+			}
+		}
+	}
+
+	// Starts the typewriter reveal, so text and voice-over begin on the same frame.
+	Widget->AddDialogueLine(LineText, SpeakerData);
 }
 
 void UBasicUIManager::SetupDialogueChoices(const TArray<FText>& ChoiceTexts)
@@ -116,6 +140,46 @@ bool UBasicUIManager::SkipDialogueLineReveal()
 		return Widget->SkipReveal();
 	}
 	return false;
+}
+
+bool UBasicUIManager::StopDialogueVoice()
+{
+	// IsValid also covers a component torn down with its world - this subsystem outlives the world.
+	if (!IsValid(DialogueVoiceComponent))
+	{
+		DialogueVoiceComponent = nullptr;
+		return false;
+	}
+
+	const bool bWasPlaying = DialogueVoiceComponent->IsPlaying();
+	DialogueVoiceComponent->OnAudioFinished.RemoveAll(this);
+
+	const float FadeSeconds = GetDefault<UPlayerSettings>()->DialogueVoiceStopFadeSeconds;
+	if (FadeSeconds > 0.f)
+	{
+		DialogueVoiceComponent->bAutoDestroy = true; // the fade tail cleans itself up once we drop the reference
+		DialogueVoiceComponent->FadeOut(FadeSeconds, 0.f);
+	}
+	else
+	{
+		DialogueVoiceComponent->Stop();
+	}
+
+	// Dropped immediately so IsDialogueVoicePlaying reports false even while a fade tail is still audible,
+	// otherwise the next continue press would be eaten too.
+	DialogueVoiceComponent = nullptr;
+	return bWasPlaying;
+}
+
+bool UBasicUIManager::IsDialogueVoicePlaying() const
+{
+	return IsValid(DialogueVoiceComponent) && DialogueVoiceComponent->IsPlaying();
+}
+
+void UBasicUIManager::OnDialogueVoiceFinished()
+{
+	// Natural end: release the handle so the state query stays accurate and the component can be collected.
+	DialogueVoiceComponent = nullptr;
 }
 
 void UBasicUIManager::NotifyToolSlotUnlocked(const int32 SlotIndex)

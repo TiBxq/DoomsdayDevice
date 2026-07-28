@@ -7,6 +7,8 @@
 #include "DoomsdayDevicePlayerController.h"
 #include "Dialogue/DialogSpeakerDataAsset.h"
 
+#include "Sound/SoundBase.h"
+
 #define LOCTEXT_NAMESPACE "FlowNode_DialogueLine"
 
 UFlowNode_DialogueLine::UFlowNode_DialogueLine()
@@ -27,7 +29,7 @@ void UFlowNode_DialogueLine::ExecuteInput(const FName& PinName)
 			PC->ContinueDialogueEvent.RemoveDynamic(this, &UFlowNode_DialogueLine::OnDialogueLineCompleted);
 			PC->ContinueDialogueEvent.AddDynamic(this, &UFlowNode_DialogueLine::OnDialogueLineCompleted);
 
-			UIManager->DisplayDialogueLine(LineText, SpeakerData);
+			UIManager->DisplayDialogueLine(LineText, SpeakerData, VoiceOver.LoadSynchronous());
 
 			TriggerOutput(TEXT("Displayed"));
 		}
@@ -36,9 +38,18 @@ void UFlowNode_DialogueLine::ExecuteInput(const FName& PinName)
 
 void UFlowNode_DialogueLine::Cleanup()
 {
-	if (ADoomsdayDevicePlayerController* PC = Cast<ADoomsdayDevicePlayerController>(GetWorld()->GetFirstPlayerController()))
+	if (const UWorld* World = GetWorld())
 	{
-		PC->ContinueDialogueEvent.RemoveAll(this);
+		if (ADoomsdayDevicePlayerController* PC = Cast<ADoomsdayDevicePlayerController>(World->GetFirstPlayerController()))
+		{
+			PC->ContinueDialogueEvent.RemoveAll(this);
+
+			// TriggerOutput runs Finish() before the downstream node, so this can never cut the next line's voice-over.
+			if (UBasicUIManager* UIManager = PC->GetLocalPlayer()->GetSubsystem<UBasicUIManager>())
+			{
+				UIManager->StopDialogueVoice();
+			}
+		}
 	}
 	Super::Cleanup();
 }
@@ -63,8 +74,15 @@ void UFlowNode_DialogueLine::UpdateNodeConfigText_Implementation()
 {
 	if (SpeakerData)
 	{
-		SetNodeConfigText(FText::Format(LOCTEXT("DialogueLineInfo", "Speaker: {0}"), { SpeakerData->DisplayName }));
+		// The VO marker lets authors spot un-voiced lines at a glance across the dialogue graphs.
+		const FText VoiceOverInfo = VoiceOver.IsNull()
+			? LOCTEXT("DialogueLineNoVoiceOver", "no VO")
+			: LOCTEXT("DialogueLineHasVoiceOver", "VO");
+
+		SetNodeConfigText(FText::Format(LOCTEXT("DialogueLineInfo", "Speaker: {0} • {1}"), { SpeakerData->DisplayName, VoiceOverInfo }));
 	}
 }
 
 #endif
+
+#undef LOCTEXT_NAMESPACE

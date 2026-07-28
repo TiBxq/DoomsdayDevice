@@ -262,9 +262,14 @@ void ADoomsdayDevicePlayerController::OnDialogueContinued()
 {
 	if (UBasicUIManager* UIManager = GetLocalPlayer()->GetSubsystem<UBasicUIManager>())
 	{
-		if (UIManager->SkipDialogueLineReveal())
+		// One press does both: cut the voice-over and snap the typewriter to full text.
+		// Kept in separate locals on purpose - || would short-circuit and skip the reveal.
+		const bool bStoppedVoice = UIManager->StopDialogueVoice();
+		const bool bSkippedReveal = UIManager->SkipDialogueLineReveal();
+
+		if (bStoppedVoice || bSkippedReveal)
 		{
-			// Press consumed: the reveal was skipped, the line does not advance.
+			// Press consumed: the line does not advance.
 			return;
 		}
 	}

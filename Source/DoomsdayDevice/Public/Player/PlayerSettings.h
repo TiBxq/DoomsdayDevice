@@ -39,6 +39,10 @@ class UPlayerSettings final : public UDeveloperSettings
 	UPROPERTY(Config, EditAnywhere, Category = "Menu")
 	TSoftObjectPtr<UWorld> GameplayLevel;
 
+	/** Fade applied when a dialogue voice-over is cut short by the continue press. 0 = hard stop. */
+	UPROPERTY(Config, EditAnywhere, Category = "Dialogue", meta = (ClampMin = "0.0"))
+	float DialogueVoiceStopFadeSeconds = 0.08f;
+
 	/** Static tool slots; index = hotkey number - 1. Slots unlock when their ToolTag is collected. */
 	UPROPERTY(Config, EditAnywhere, Category = "Tools")
 	TArray<FToolSlotDefinition> ToolSlots;

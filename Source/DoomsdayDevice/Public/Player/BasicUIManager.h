@@ -9,6 +9,8 @@ class UDialogSpeakerDataAsset;
 class UDialogueWidget;
 class UToolSlotsWidget;
 class UHUDWidget;
+class USoundBase;
+class UAudioComponent;
 
 /**
  *
@@ -42,13 +44,20 @@ public:
 	void DisplayHUD();
 
 	// ----------- Dialogue ---------------
-	void DisplayDialogueLine(const FText& LineText, TObjectPtr<UDialogSpeakerDataAsset> SpeakerData);
+	/** Displays a line; VoiceOver (optional) starts playing 2D alongside the typewriter reveal. */
+	void DisplayDialogueLine(const FText& LineText, TObjectPtr<UDialogSpeakerDataAsset> SpeakerData, USoundBase* VoiceOver = nullptr);
 
 	void SetupDialogueChoices(const TArray<FText>& ChoiceTexts);
 	void ClearDialogueChoices();
 
 	/** Returns true if the open dialogue widget had a line reveal in progress and it was skipped. */
 	bool SkipDialogueLineReveal();
+
+	/** Stops the dialogue voice-over. Returns true if one was actually playing (press consumed). */
+	bool StopDialogueVoice();
+
+	/** True while a dialogue voice-over is audible. */
+	bool IsDialogueVoicePlaying() const;
 
 	// ----------- Tools ---------------
 	/** Opens the tool slots widget if needed and marks the slot unlocked. */
@@ -61,4 +70,11 @@ private:
 	UDialogueWidget* GetDialogueWidget(bool bOpenIfNeeded);
 	UToolSlotsWidget* GetToolSlotsWidget(bool bOpenIfNeeded);
 	UHUDWidget* GetHUDWidget(bool bOpenIfNeeded);
+
+	/** Playback handle for the current line's voice-over; kept referenced so it isn't GC'd while playing. */
+	UPROPERTY(Transient)
+	TObjectPtr<UAudioComponent> DialogueVoiceComponent;
+
+	UFUNCTION()
+	void OnDialogueVoiceFinished();
 };

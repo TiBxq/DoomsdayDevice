@@ -20,6 +20,8 @@ void UFlowNode_EndDialogue::ExecuteInput(const FName& PinName)
 	{
 		if (UBasicUIManager* UIManager = PC->GetLocalPlayer()->GetSubsystem<UBasicUIManager>())
 		{
+			// Stop first, so ending a dialogue off a line's Displayed pin can't leave a voice talking over a closed screen.
+			UIManager->StopDialogueVoice();
 			UIManager->CloseWidget(GetDefault<UPlayerSettings>()->DialogueWidget);
 			TriggerFirstOutput(true);
 		}

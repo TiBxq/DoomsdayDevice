@@ -37,6 +37,15 @@ public:
 	UFUNCTION(BlueprintCallable)
 	int32 GetFactValue(const FGameplayTag& Tag) const;
 
+	/** Whole fact table, for serializing into a save game. */
+	const TMap<FGameplayTag, int32>& GetAllFacts() const { return Facts; }
+
+	/** Replace the whole fact table (used when restoring a save). Does not broadcast. */
+	void SetFacts(const TMap<FGameplayTag, int32>& InFacts);
+
+	/** Clear all facts (used when starting a new game). Does not broadcast. */
+	void ResetFacts();
+
 private:
 	TMap<FGameplayTag, int32> Facts;
 };

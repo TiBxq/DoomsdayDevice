@@ -36,3 +36,13 @@ int32 UInventorySubsystem::GetItemCount(const FGameplayTag& Tag) const
 	const int32* Count = Items.Find(Tag);
 	return Count ? *Count : 0;
 }
+
+void UInventorySubsystem::SetItems(const TMap<FGameplayTag, int32>& InItems)
+{
+	Items = InItems;
+}
+
+void UInventorySubsystem::ResetInventory()
+{
+	Items.Reset();
+}

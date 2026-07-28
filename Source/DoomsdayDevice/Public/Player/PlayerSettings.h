@@ -7,6 +7,7 @@
 
 class UInputMappingContext;
 class UUserWidget;
+class UWorld;
 
 /**
  *
@@ -30,6 +31,13 @@ class UPlayerSettings final : public UDeveloperSettings
 
 	UPROPERTY(Config, EditAnywhere, Category = "Widgets")
 	TSoftClassPtr<UUserWidget> DialogueHintWidget;
+
+	UPROPERTY(Config, EditAnywhere, Category = "Widgets")
+	TSoftClassPtr<UUserWidget> MainMenuWidget;
+
+	/** Level entered by the Main Menu's New Game / Continue actions. */
+	UPROPERTY(Config, EditAnywhere, Category = "Menu")
+	TSoftObjectPtr<UWorld> GameplayLevel;
 
 	/** Static tool slots; index = hotkey number - 1. Slots unlock when their ToolTag is collected. */
 	UPROPERTY(Config, EditAnywhere, Category = "Tools")

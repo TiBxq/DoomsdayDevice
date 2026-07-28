@@ -86,6 +86,9 @@ void ADoomsdayDevicePlayerController::BeginPlay()
 				OnHintFactChanged(HintFactTag, FactsDB->GetFactValue(HintFactTag));
 			}
 		}
+
+		SetInputMode(FInputModeGameOnly());
+		bShowMouseCursor = false;
 	}
 }
 

@@ -7,7 +7,7 @@
 /**
  *
  */
-UCLASS(NotBlueprintable, meta = (DisplayName = "Checkpoint"))
+UCLASS(NotBlueprintable, meta = (DisplayName = "Custom Checkpoint"))
 class UFlowNode_CustomCheckpoint final : public UFlowNode
 {
 	GENERATED_BODY()

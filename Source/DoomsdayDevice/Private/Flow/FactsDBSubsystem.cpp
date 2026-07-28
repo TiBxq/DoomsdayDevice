@@ -33,3 +33,13 @@ int32 UFactsDBSubsystem::GetFactValue(const FGameplayTag& Tag) const
 	}
 	return -1;
 }
+
+void UFactsDBSubsystem::SetFacts(const TMap<FGameplayTag, int32>& InFacts)
+{
+	Facts = InFacts;
+}
+
+void UFactsDBSubsystem::ResetFacts()
+{
+	Facts.Reset();
+}

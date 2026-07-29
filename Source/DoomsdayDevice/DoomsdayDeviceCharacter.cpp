@@ -324,6 +324,8 @@ void ADoomsdayDeviceCharacter::ToggleToolSlot(const int32 SlotIndex)
 	{
 		UIManager->NotifyEquippedToolChanged(EquippedToolSlot);
 	}
+
+	OnToolEquip(Tool);
 }
 
 void ADoomsdayDeviceCharacter::UnequipTool()
@@ -333,9 +335,12 @@ void ADoomsdayDeviceCharacter::UnequipTool()
 		return;
 	}
 
+	AToolActor* Tool = nullptr;
+
 	if (ToolActors.IsValidIndex(EquippedToolSlot) && ToolActors[EquippedToolSlot])
 	{
 		ToolActors[EquippedToolSlot]->SetActorHiddenInGame(true);
+		Tool = ToolActors[EquippedToolSlot];
 	}
 	EquippedToolSlot = INDEX_NONE;
 
@@ -347,6 +352,8 @@ void ADoomsdayDeviceCharacter::UnequipTool()
 	{
 		UIManager->NotifyEquippedToolChanged(INDEX_NONE);
 	}
+
+	OnToolUnequip(Tool);
 }
 
 void ADoomsdayDeviceCharacter::PlayEquippedToolUseMontage()

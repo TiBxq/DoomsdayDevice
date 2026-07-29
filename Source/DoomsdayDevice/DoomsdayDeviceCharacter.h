@@ -158,6 +158,12 @@ public:
 
 	UFlowComponent* GetFlowComponent() const { return FlowComponent; }
 
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnToolEquip(AToolActor* Tool);
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnToolUnequip(AToolActor* Tool);
+
 private:
 
 	TWeakObjectPtr<UCarryableComponent> CarriedItem;

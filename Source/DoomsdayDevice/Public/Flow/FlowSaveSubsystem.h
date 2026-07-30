@@ -2,9 +2,11 @@
 #pragma once
 
 #include "FlowSubsystem.h"
+#include "Flow/DoomsdaySaveGame.h"
+
 #include "FlowSaveSubsystem.generated.h"
 
-class UDoomsdaySaveGame;
+class USaveableComponent;
 
 /**
  * Save/load for the single "Checkpoint" slot. Wraps the Flow plugin's serialization
@@ -45,7 +47,27 @@ public:
 	/** Delete the checkpoint slot and clear item/fact state (used by New Game). */
 	void DeleteSaveGame();
 
+	void RegisterSaveable(USaveableComponent* Comp);
+
+	void UnregisterSaveable(USaveableComponent* Comp, bool bDestroyed);
+
+	void RestoreActorIfPending(USaveableComponent* Comp);
+
 private:
 	/** Push a loaded save game's item/fact tables into the live subsystems. */
 	void RestoreGameState(const UDoomsdaySaveGame* SaveGame);
+
+	void SerializeActor(AActor* Actor, FActorSaveData& OutData);
+
+	void DeserializeActor(AActor* Actor, const FActorSaveData& Data);
+
+	void OnPostLoadMap(UWorld* World);
+
+	TArray<TWeakObjectPtr<USaveableComponent>> Registered;
+
+	TMap<FGuid, FActorSaveData> PendingActorData;
+	TSet<FGuid> DestroyedActors;
+
+	FDelegateHandle PostLoadMapHandle;
+	bool bLoadInProgress = false;
 };

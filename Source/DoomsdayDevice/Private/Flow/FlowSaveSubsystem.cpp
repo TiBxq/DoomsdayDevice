@@ -163,11 +163,12 @@ void UFlowSaveSubsystem::UnregisterSaveable(USaveableComponent* Comp, bool bDest
 
 void UFlowSaveSubsystem::RestoreActorIfPending(USaveableComponent* Comp)
 {
-	if (DestroyedActors.Contains(Comp->SaveId))
+	// disable destroying for now
+	/*if (DestroyedActors.Contains(Comp->SaveId))
 	{
 		Comp->GetOwner()->Destroy();
 		return;
-	}
+	}*/
 
 	if (const FActorSaveData* Data = PendingActorData.Find(Comp->SaveId))
 	{
@@ -225,7 +226,9 @@ void UFlowSaveSubsystem::OnPostLoadMap(UWorld* World)
 
 	// Level-placed will be restored via RestoreActorIfPending.
 	// here we are respawning runtime actors
-	TArray<FGuid> ToSpawn;
+
+	// disable runtime actors saving for now
+	/*TArray<FGuid> ToSpawn;
 	for (const auto& Pair : PendingActorData)
 	{
 		if (!Pair.Value.SpawnClass.IsNull())
@@ -249,7 +252,7 @@ void UFlowSaveSubsystem::OnPostLoadMap(UWorld* World)
 			Comp->bRuntimeSpawned = true;
 			RestoreActorIfPending(Comp);
 		}
-	}
+	}*/
 
 	bLoadInProgress = false;
 }

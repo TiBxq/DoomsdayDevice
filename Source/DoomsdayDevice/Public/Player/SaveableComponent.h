@@ -9,7 +9,7 @@ class USaveableComponent : public UActorComponent
 public:
     USaveableComponent();
 
-    UPROPERTY(VisibleAnywhere, DuplicateTransient, Category = "Save")
+    UPROPERTY(VisibleAnywhere, Transient, Category = "Save")
     FGuid SaveId;
 
     UPROPERTY(BlueprintReadOnly, Category = "Save")

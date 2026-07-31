@@ -1,5 +1,4 @@
 #include "Gameplay/WallPanel.h"
-#include "Gameplay/PanelScrew.h"
 
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
@@ -7,6 +6,9 @@
 #include "FlowComponent.h"
 #include "PhysicsEngine/PhysicsConstraintComponent.h"
 #include "UObject/ConstructorHelpers.h"
+
+#include "Gameplay/PanelScrew.h"
+#include "Player/SaveableComponent.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(WallPanel)
 
@@ -31,6 +33,8 @@ AWallPanel::AWallPanel()
 	MeshComponent->SetAngularDamping(2.0f);
 
 	FlowComponent = CreateDefaultSubobject<UFlowComponent>(TEXT("FlowComponent"));
+
+	SaveComponent = CreateDefaultSubobject<USaveableComponent>(TEXT("SaveComponent"));
 
 	ScrewClass = APanelScrew::StaticClass();
 
@@ -74,31 +78,47 @@ void AWallPanel::BeginPlay()
 	const FQuat MeshAxisFix(FRotator(-90.0f, 0.0f, 0.0f));
 	const FTransform ActorT = GetActorTransform();
 
+	int32 Index = 0;
 	for (const FTransform& Slot : ScrewSlots)
 	{
-		// transform the location through the scaled actor transform (matches the edit widget),
-		// but spawn with unit scale so the panel's non-uniform scale can't squash the screw
-		const FVector Location = ActorT.TransformPosition(Slot.GetLocation());
-		const FQuat Rotation = ActorT.GetRotation() * Slot.GetRotation() * MeshAxisFix;
-		const FTransform SpawnTransform(Rotation, Location, FVector::OneVector);
-
-		APanelScrew* Screw = GetWorld()->SpawnActorDeferred<APanelScrew>(ScrewClass, SpawnTransform, this, nullptr,
-			ESpawnActorCollisionHandlingMethod::AlwaysSpawn, ESpawnActorScaleMethod::MultiplyWithRoot);
-		if (!Screw)
+		if (!EjectedIndices.Contains(Index))
 		{
-			continue;
+			// transform the location through the scaled actor transform (matches the edit widget),
+			// but spawn with unit scale so the panel's non-uniform scale can't squash the screw
+			const FVector Location = ActorT.TransformPosition(Slot.GetLocation());
+			const FQuat Rotation = ActorT.GetRotation() * Slot.GetRotation() * MeshAxisFix;
+			const FTransform SpawnTransform(Rotation, Location, FVector::OneVector);
+
+			APanelScrew* Screw = GetWorld()->SpawnActorDeferred<APanelScrew>(ScrewClass, SpawnTransform, this, nullptr,
+				ESpawnActorCollisionHandlingMethod::AlwaysSpawn, ESpawnActorScaleMethod::MultiplyWithRoot);
+			if (!Screw)
+			{
+				continue;
+			}
+
+			// stamp identity before FinishSpawning so the Flow component registers with the right tags
+			if (ScrewIdentityTags.IsValid())
+			{
+				Screw->GetFlowComponent()->IdentityTags = ScrewIdentityTags;
+			}
+			Screw->FinishSpawning(SpawnTransform, false, nullptr, ESpawnActorScaleMethod::MultiplyWithRoot);
+
+			Screw->Index = Index;
+			Screw->AttachToComponent(MeshComponent, FAttachmentTransformRules::KeepWorldTransform);
+			Screw->OnEjected.AddDynamic(this, &AWallPanel::HandleScrewEjected);
+			SpawnedScrews.Add(Screw);
 		}
 
-		// stamp identity before FinishSpawning so the Flow component registers with the right tags
-		if (ScrewIdentityTags.IsValid())
-		{
-			Screw->GetFlowComponent()->IdentityTags = ScrewIdentityTags;
-		}
-		Screw->FinishSpawning(SpawnTransform, false, nullptr, ESpawnActorScaleMethod::MultiplyWithRoot);
+		Index++;
+	}
 
-		Screw->AttachToComponent(MeshComponent, FAttachmentTransformRules::KeepWorldTransform);
-		Screw->OnEjected.AddDynamic(this, &AWallPanel::HandleScrewEjected);
-		SpawnedScrews.Add(Screw);
+	if (SpawnedScrews.Num() == 1)
+	{
+		BeginDangle(SpawnedScrews[0]);
+	}
+	else if (SpawnedScrews.Num() == 0)
+	{
+		BeginFall();
 	}
 }
 
@@ -114,10 +134,12 @@ void AWallPanel::HandleScrewEjected(APanelScrew* Screw)
 {
 	SpawnedScrews.Remove(Screw);
 
-	if (bDetached)
+	if (bDetached || !Screw)
 	{
 		return;
 	}
+
+	EjectedIndices.Add(Screw->Index);
 
 	if (SpawnedScrews.Num() == 1)
 	{
@@ -179,4 +201,15 @@ void AWallPanel::BeginFall()
 	MeshComponent->WakeAllRigidBodies();
 
 	OnPanelDetached.Broadcast();
+}
+
+void AWallPanel::OnPostLoadSaved_Implementation()
+{
+	for (TObjectPtr<APanelScrew> Screw : SpawnedScrews)
+	{
+		if (Screw && EjectedIndices.Contains(Screw->Index))
+		{
+			Screw->Eject();
+		}
+	}
 }

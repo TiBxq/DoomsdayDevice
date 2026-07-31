@@ -35,6 +35,9 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Screw")
 	FPanelScrewEvent OnEjected;
 
+	UPROPERTY(BlueprintReadOnly)
+	int32 Index = -1;
+
 	/** Pops the screw out of the panel: disables interaction, then detaches and simulates physics */
 	UFUNCTION(BlueprintCallable, Category = "Screw")
 	void Eject();

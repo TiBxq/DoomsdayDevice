@@ -3,6 +3,8 @@
 #include "GameFramework/Actor.h"
 #include "GameplayTagContainer.h"
 #include "Templates/SubclassOf.h"
+#include "Player/Saveable.h"
+
 #include "WallPanel.generated.h"
 
 class APanelScrew;
@@ -10,6 +12,7 @@ class UFlowComponent;
 class UPhysicsConstraintComponent;
 class UStaticMeshComponent;
 class USceneComponent;
+class USaveableComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FWallPanelEvent);
 
@@ -19,7 +22,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FWallPanelEvent);
  * remaining screw, and falls off the wall once that final screw is ejected.
  */
 UCLASS(Blueprintable, ClassGroup = Gameplay)
-class DOOMSDAYDEVICE_API AWallPanel : public AActor
+class DOOMSDAYDEVICE_API AWallPanel : public AActor, public ISaveable
 {
 	GENERATED_BODY()
 
@@ -43,12 +46,20 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Panel")
 	FWallPanelEvent OnPanelDetached;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Save")
+	TObjectPtr<USaveableComponent> SaveComponent;
+
+	UPROPERTY(SaveGame)
+	TSet<int32> EjectedIndices;
+
 	/** Ejects the most recently spawned remaining screw; debug/Flow hook */
 	UFUNCTION(BlueprintCallable, Category = "Panel")
 	void EjectNextScrew();
 
 	UFUNCTION(BlueprintPure, Category = "Panel")
 	bool IsFullyDetached() const { return bDetached; }
+
+	virtual void OnPostLoadSaved_Implementation() override;
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Panel")

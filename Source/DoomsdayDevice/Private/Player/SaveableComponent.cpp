@@ -10,21 +10,20 @@ USaveableComponent::USaveableComponent()
 void USaveableComponent::OnRegister()
 {
     Super::OnRegister();
-
-#if WITH_EDITOR
-    if (!SaveId.IsValid() && GetWorld() && !GetWorld()->IsGameWorld())
-    {
-        SaveId = FGuid::NewGuid();
-        Modify();
-    }
-#endif
 }
 
 void USaveableComponent::BeginPlay()
 {
     Super::BeginPlay();
 
-    if (!SaveId.IsValid())
+    if (GetOwner()->HasAnyFlags(RF_WasLoaded))
+    {
+        FString Path = GetOwner()->GetPathName();
+        Path = UWorld::RemovePIEPrefix(Path);
+
+        SaveId = FGuid::NewDeterministicGuid(Path);
+    }
+    else
     {
         SaveId = FGuid::NewGuid();
         bRuntimeSpawned = true;

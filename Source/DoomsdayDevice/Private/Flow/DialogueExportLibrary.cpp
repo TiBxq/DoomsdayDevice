@@ -142,6 +142,7 @@ void UDialogueExportLibrary::GatherDialogueLines(const FString& RootPath, bool b
 			Row.DialogueID = DialogueNode->GetDialogueID();
 			Row.SpeakerName = SpeakerData ? SpeakerData->DisplayName.ToString() : FString();
 			Row.DialogueLineText = DialogueNode->GetLineText().ToString();
+			Row.DevComment = DialogueNode->GetDevComment();
 		}
 
 		if (bAssignedInThisAsset)
@@ -207,7 +208,7 @@ FString UDialogueExportLibrary::GetDefaultExportFilePath()
 
 FString UDialogueExportLibrary::BuildCsv(const TArray<FDialogueLineExportRow>& Rows)
 {
-	FString Csv = TEXT("FlowAssetName,DialogueID,SpeakerName,DialogueLineText\r\n");
+	FString Csv = TEXT("FlowAssetName,DialogueID,SpeakerName,DialogueLineText,DevComment\r\n");
 
 	for (const FDialogueLineExportRow& Row : Rows)
 	{
@@ -218,6 +219,8 @@ FString UDialogueExportLibrary::BuildCsv(const TArray<FDialogueLineExportRow>& R
 		Csv += DoomsdayDialogueExport::EscapeCsvField(Row.SpeakerName);
 		Csv += TEXT(",");
 		Csv += DoomsdayDialogueExport::EscapeCsvField(Row.DialogueLineText);
+		Csv += TEXT(",");
+		Csv += DoomsdayDialogueExport::EscapeCsvField(Row.DevComment);
 		Csv += TEXT("\r\n");
 	}
 

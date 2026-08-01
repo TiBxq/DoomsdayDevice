@@ -25,6 +25,9 @@ struct FDialogueLineExportRow
 
 	UPROPERTY(BlueprintReadOnly, Category = "Dialogue Export")
 	FString DialogueLineText;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Dialogue Export")
+	FString DevComment;
 };
 
 /**

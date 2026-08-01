@@ -44,6 +44,11 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Dialogue")
 	TSoftObjectPtr<USoundBase> VoiceOver;
 
+#if WITH_EDITORONLY_DATA
+	UPROPERTY(EditAnywhere, Category = "Dialogue")
+	FString DevComment;
+#endif
+
 protected:
 	virtual void ExecuteInput(const FName& PinName) override;
 
@@ -58,5 +63,7 @@ public:
 	virtual EDataValidationResult ValidateNode() override;
 
 	virtual void UpdateNodeConfigText_Implementation() override;
+
+	const FString& GetDevComment() const { return DevComment; }
 #endif
 };

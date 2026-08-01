@@ -19,6 +19,10 @@ struct FDialogueLineExportRow
 	UPROPERTY(BlueprintReadOnly, Category = "Dialogue Export")
 	FString DialogueID;
 
+	/** DisplayName of the node's speaker data asset; empty when the line has no speaker assigned. */
+	UPROPERTY(BlueprintReadOnly, Category = "Dialogue Export")
+	FString SpeakerName;
+
 	UPROPERTY(BlueprintReadOnly, Category = "Dialogue Export")
 	FString DialogueLineText;
 };

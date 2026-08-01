@@ -10,6 +10,7 @@
 #include "Misc/Paths.h"
 
 #if WITH_EDITOR
+#include "Dialogue/DialogSpeakerDataAsset.h"
 #include "Flow/Nodes/FlowNode_DialogueLine.h"
 
 #include "FlowAsset.h"
@@ -134,9 +135,12 @@ void UDialogueExportLibrary::GatherDialogueLines(const FString& RootPath, bool b
 				++OutAssignedIdCount;
 			}
 
+			const UDialogSpeakerDataAsset* SpeakerData = DialogueNode->GetSpeakerData();
+
 			FDialogueLineExportRow& Row = OutRows.AddDefaulted_GetRef();
 			Row.FlowAssetName = AssetName;
 			Row.DialogueID = DialogueNode->GetDialogueID();
+			Row.SpeakerName = SpeakerData ? SpeakerData->DisplayName.ToString() : FString();
 			Row.DialogueLineText = DialogueNode->GetLineText().ToString();
 		}
 
@@ -203,13 +207,15 @@ FString UDialogueExportLibrary::GetDefaultExportFilePath()
 
 FString UDialogueExportLibrary::BuildCsv(const TArray<FDialogueLineExportRow>& Rows)
 {
-	FString Csv = TEXT("FlowAssetName,DialogueID,DialogueLineText\r\n");
+	FString Csv = TEXT("FlowAssetName,DialogueID,SpeakerName,DialogueLineText\r\n");
 
 	for (const FDialogueLineExportRow& Row : Rows)
 	{
 		Csv += DoomsdayDialogueExport::EscapeCsvField(Row.FlowAssetName);
 		Csv += TEXT(",");
 		Csv += DoomsdayDialogueExport::EscapeCsvField(Row.DialogueID);
+		Csv += TEXT(",");
+		Csv += DoomsdayDialogueExport::EscapeCsvField(Row.SpeakerName);
 		Csv += TEXT(",");
 		Csv += DoomsdayDialogueExport::EscapeCsvField(Row.DialogueLineText);
 		Csv += TEXT("\r\n");

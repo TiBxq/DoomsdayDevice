@@ -21,7 +21,18 @@ class DOOMSDAYDEVICE_API UFlowNode_DialogueLine : public UFlowNode
 public:
 	UFlowNode_DialogueLine();
 
+	const FText& GetLineText() const { return LineText; }
+	const FString& GetDialogueID() const { return DialogueID; }
+
+#if WITH_EDITOR
+	void SetDialogueID(const FString& InDialogueID);
+#endif
+
 protected:
+	/** Stable export key, shared with the CSV dialogue export. Auto-filled by that tool while empty. */
+	UPROPERTY(EditAnywhere, Category = "Dialogue")
+	FString DialogueID;
+
 	UPROPERTY(EditAnywhere, Category = "Dialogue")
 	FText LineText;
 

@@ -59,7 +59,15 @@ void UFlowNode_DialogueLine::OnDialogueLineCompleted()
 	TriggerOutput(TEXT("Completed"), true);
 }
 
-#if WITH_EDITOR 
+#if WITH_EDITOR
+void UFlowNode_DialogueLine::SetDialogueID(const FString& InDialogueID)
+{
+	DialogueID = InDialogueID;
+
+	// The exporter writes the ID without going through PostEditChangeProperty, so refresh the node face by hand.
+	UpdateNodeConfigText();
+}
+
 FString UFlowNode_DialogueLine::GetNodeDescription() const
 {
 	return LineText.ToString();
@@ -72,6 +80,13 @@ EDataValidationResult UFlowNode_DialogueLine::ValidateNode()
 
 void UFlowNode_DialogueLine::UpdateNodeConfigText_Implementation()
 {
+	TArray<FText> ConfigLines;
+
+	if (!DialogueID.IsEmpty())
+	{
+		ConfigLines.Add(FText::FromString(DialogueID));
+	}
+
 	if (SpeakerData)
 	{
 		// The VO marker lets authors spot un-voiced lines at a glance across the dialogue graphs.
@@ -79,7 +94,12 @@ void UFlowNode_DialogueLine::UpdateNodeConfigText_Implementation()
 			? LOCTEXT("DialogueLineNoVoiceOver", "no VO")
 			: LOCTEXT("DialogueLineHasVoiceOver", "VO");
 
-		SetNodeConfigText(FText::Format(LOCTEXT("DialogueLineInfo", "Speaker: {0} • {1}"), { SpeakerData->DisplayName, VoiceOverInfo }));
+		ConfigLines.Add(FText::Format(LOCTEXT("DialogueLineInfo", "Speaker: {0} • {1}"), { SpeakerData->DisplayName, VoiceOverInfo }));
+	}
+
+	if (ConfigLines.Num() > 0)
+	{
+		SetNodeConfigText(FText::Join(FText::FromString(TEXT("\n")), ConfigLines));
 	}
 }
 

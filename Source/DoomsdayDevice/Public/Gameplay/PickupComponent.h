@@ -25,6 +25,9 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Pickup")
 	bool bDestroyOwnerOnPickup;
 
+	UPROPERTY(EditAnywhere, Category = "Pickup")
+	bool bAutoEquip = true;
+
 	virtual void BeginPlay() override;
 
 protected:

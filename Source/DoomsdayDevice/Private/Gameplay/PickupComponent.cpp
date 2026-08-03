@@ -1,9 +1,13 @@
 #include "Gameplay/PickupComponent.h"
+
 #include "Gameplay/InventorySubsystem.h"
+#include "DoomsdayDeviceCharacter.h"
+#include "Player/PlayerSettings.h"
 
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
+#include "Kismet/GameplayStatics.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(PickupComponent)
 
@@ -32,6 +36,32 @@ void UPickupComponent::HandlePickedUp()
 		if (UInventorySubsystem* Inventory = GetWorld()->GetGameInstance()->GetSubsystem<UInventorySubsystem>())
 		{
 			Inventory->CollectItem(ItemTag, Count);
+		}
+	}
+
+	if (bAutoEquip)
+	{
+		if (ADoomsdayDeviceCharacter* PlayerCharacter = Cast<ADoomsdayDeviceCharacter>(UGameplayStatics::GetPlayerPawn(GetWorld(), 0)))
+		{
+			const TArray<FToolSlotDefinition>& ToolSlots = GetDefault<UPlayerSettings>()->ToolSlots;
+			int32 SlotIndex = -1;
+			int32 Index = 0;
+			for (const FToolSlotDefinition& Tool : ToolSlots)
+			{
+				if (Tool.ToolTag == ItemTag)
+				{
+					SlotIndex = Index;
+				}
+				Index++;
+			}
+
+			if (SlotIndex >= 0)
+			{
+				if (PlayerCharacter->GetEquippedToolSlot() != SlotIndex)
+				{
+					PlayerCharacter->ToggleToolSlot(SlotIndex);
+				}
+			}
 		}
 	}
 

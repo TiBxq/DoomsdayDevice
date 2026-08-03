@@ -51,6 +51,7 @@ void UPickupComponent::HandlePickedUp()
 				if (Tool.ToolTag == ItemTag)
 				{
 					SlotIndex = Index;
+					break;
 				}
 				Index++;
 			}

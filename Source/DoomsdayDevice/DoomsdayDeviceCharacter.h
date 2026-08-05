@@ -164,6 +164,14 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnToolUnequip(AToolActor* Tool);
 
+protected:
+	/** Arms AnimBP assigned in the Blueprint; captured on BeginPlay and restored when a tool is unequipped */
+	UPROPERTY(BlueprintReadOnly)
+	TSubclassOf<UAnimInstance> DefaultFirstPersonAnimClass;
+
+	UPROPERTY(BlueprintReadOnly)
+	TSubclassOf<UAnimInstance> DefaultThirdPersonAnimClass;
+
 private:
 
 	TWeakObjectPtr<UCarryableComponent> CarriedItem;
@@ -176,13 +184,6 @@ private:
 	TArray<TObjectPtr<AToolActor>> ToolActors;
 
 	int32 EquippedToolSlot = INDEX_NONE;
-
-	/** Arms AnimBP assigned in the Blueprint; captured on BeginPlay and restored when a tool is unequipped */
-	UPROPERTY()
-	TSubclassOf<UAnimInstance> DefaultFirstPersonAnimClass;
-
-	UPROPERTY()
-	TSubclassOf<UAnimInstance> DefaultThirdPersonAnimClass;
 
 	void HandleItemCollected(const FGameplayTag& ItemTag, int32 NewCount);
 

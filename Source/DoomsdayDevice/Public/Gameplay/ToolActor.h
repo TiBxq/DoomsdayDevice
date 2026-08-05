@@ -31,10 +31,12 @@ public:
 	USkeletalMeshComponent* GetThirdPersonMesh() const { return ThirdPersonMesh; }
 
 	/** Arms AnimBP applied to the character's first-person mesh while this tool is equipped */
-	const TSubclassOf<UAnimInstance>& GetFirstPersonAnimInstanceClass() const { return FirstPersonAnimInstanceClass; }
+	UFUNCTION(BlueprintCallable)
+	TSubclassOf<UAnimInstance> GetFirstPersonAnimInstanceClass() const { return FirstPersonAnimInstanceClass; }
 
 	/** Returns the third person anim instance class */
-	const TSubclassOf<UAnimInstance>& GetThirdPersonAnimInstanceClass() const { return ThirdPersonAnimInstanceClass; }
+	UFUNCTION(BlueprintCallable)
+	TSubclassOf<UAnimInstance> GetThirdPersonAnimInstanceClass() const { return ThirdPersonAnimInstanceClass; }
 
 	/** Montage played on the character's arms when this tool is successfully used */
 	UAnimMontage* GetUseMontage() const { return UseMontage; }

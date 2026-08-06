@@ -9,8 +9,10 @@
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundBase.h"
 
+#include "Gameplay/InteractionPrompt.h"
 #include "Player/PlayerSettings.h"
 #include "UI/DialogueWidget.h"
+#include "UI/InteractionPromptWidget.h"
 #include "UI/ToolSlotsWidget.h"
 #include "UI/HUDWidget.h"
 
@@ -267,4 +269,40 @@ UHUDWidget* UBasicUIManager::GetHUDWidget(bool bOpenIfNeeded)
 	}
 
 	return Cast<UHUDWidget>(OpenedWidgets.FindRef(HUDWidgetClass));
+}
+
+UInteractionPromptWidget* UBasicUIManager::GetInteractionPromptWidget(const bool bOpenIfNeeded)
+{
+	const TSoftClassPtr<UUserWidget> InteractionWidgetClass = GetDefault<UPlayerSettings>()->InteractionWidget;
+
+	if (bOpenIfNeeded && !OpenedWidgets.Contains(InteractionWidgetClass))
+	{
+		OpenWidget(InteractionWidgetClass);
+	}
+
+	// null until the InteractionWidget blueprint is reparented to UInteractionPromptWidget
+	return Cast<UInteractionPromptWidget>(OpenedWidgets.FindRef(InteractionWidgetClass));
+}
+
+void UBasicUIManager::NotifyInteractionPromptChanged(const FInteractionPrompt& Prompt)
+{
+	// the player controller opens the prompt widget when it activates the interaction; don't force
+	// it back open here - same reasoning as NotifyEquippedToolChanged
+	if (UInteractionPromptWidget* Widget = GetInteractionPromptWidget(false))
+	{
+		Widget->SetPrompt(Prompt);
+	}
+
+	if (UHUDWidget* HUD = GetHUDWidget(false))
+	{
+		HUD->SetReticleState(Prompt.bCanUse ? EInteractionReticleState::Available : EInteractionReticleState::Blocked);
+	}
+}
+
+void UBasicUIManager::NotifyInteractionPromptCleared()
+{
+	if (UHUDWidget* HUD = GetHUDWidget(false))
+	{
+		HUD->SetReticleState(EInteractionReticleState::Idle);
+	}
 }

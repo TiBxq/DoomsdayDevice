@@ -5,6 +5,9 @@
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
 #include "GameplayTagContainer.h"
+
+#include "Gameplay/InteractionPrompt.h"
+
 #include "DoomsdayDevicePlayerController.generated.h"
 
 class UInputMappingContext;
@@ -45,6 +48,13 @@ public:
 	/** Fired when Use is pressed on an interaction whose required tool is not in hand (for UI feedback). */
 	UPROPERTY(BlueprintAssignable, Category = "Interaction")
 	FInteractionUseDeniedEvent OnInteractionUseDenied;
+
+	/** Prompt for the interaction currently targeted; default-constructed when nothing is targeted. */
+	UFUNCTION(BlueprintPure, Category = "Interaction")
+	FInteractionPrompt GetCurrentInteractionPrompt() const { return CurrentPrompt; }
+
+	UFUNCTION(BlueprintPure, Category = "Interaction")
+	bool HasActiveInteraction() const { return ActiveInteraction.IsValid(); }
 
 protected:
 
@@ -125,6 +135,13 @@ private:
 
 	void ActivateInteraction(const TWeakObjectPtr<UInteractionComponent> Interaction);
 	void DeactivateInteraction();
+
+	/** Re-evaluates the active interaction's prompt and pushes it to the UI only when it changed. */
+	void RefreshInteractionPrompt();
+
+	FInteractionPrompt CurrentPrompt;
+	TWeakObjectPtr<UInteractionComponent> PromptSource;
+	bool bPromptPushed = false;
 
 	void OnInteractionUsed();
 	void OnDropUsed();

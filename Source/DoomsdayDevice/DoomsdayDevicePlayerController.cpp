@@ -56,13 +56,14 @@ void ADoomsdayDevicePlayerController::BeginPlay()
 	// the widget pulls unlock/selection state itself on construct
 	if (IsLocalPlayerController())
 	{
-		const UInventorySubsystem* Inventory = GetGameInstance() ? GetGameInstance()->GetSubsystem<UInventorySubsystem>() : nullptr;
-		if (Inventory)
+		if (UBasicUIManager* UIManager = GetLocalPlayer()->GetSubsystem<UBasicUIManager>())
 		{
-			if (UBasicUIManager* UIManager = GetLocalPlayer()->GetSubsystem<UBasicUIManager>())
-			{
-				UIManager->DisplayHUD();
+			// the HUD carries the interaction reticle, so it must not depend on the inventory
+			UIManager->DisplayHUD();
 
+			const UInventorySubsystem* Inventory = GetGameInstance() ? GetGameInstance()->GetSubsystem<UInventorySubsystem>() : nullptr;
+			if (Inventory)
+			{
 				for (const FToolSlotDefinition& Slot : GetDefault<UPlayerSettings>()->ToolSlots)
 				{
 					if (Inventory->HasItem(Slot.ToolTag))
@@ -183,6 +184,10 @@ void ADoomsdayDevicePlayerController::PlayerTick(float DeltaTime)
 	{
 		DeactivateInteraction();
 	}
+
+	// the prompt flips without re-targeting: equipping/unequipping a tool, StartCarry auto-stowing
+	// one, or an EvaluatePrompt override changing its mind. Cheap when nothing changed.
+	RefreshInteractionPrompt();
 }
 
 void ADoomsdayDevicePlayerController::OnInteractionEnter(const TWeakObjectPtr<UInteractionComponent> Interaction)
@@ -209,12 +214,66 @@ void ADoomsdayDevicePlayerController::ActivateInteraction(const TWeakObjectPtr<U
 
 	ActiveInteraction = Interaction;
 	GetLocalPlayer()->GetSubsystem<UBasicUIManager>()->OpenWidget(GetDefault<UPlayerSettings>()->InteractionWidget);
+
+	// OpenWidget ran the widget's NativeConstruct, which pulled whatever the cache held at the time;
+	// force a push so the brand new widget is correct on its first frame
+	bPromptPushed = false;
+	RefreshInteractionPrompt();
 }
 
 void ADoomsdayDevicePlayerController::DeactivateInteraction()
 {
 	ActiveInteraction = nullptr;
 	GetLocalPlayer()->GetSubsystem<UBasicUIManager>()->CloseWidget(GetDefault<UPlayerSettings>()->InteractionWidget);
+
+	// resets the reticle to Idle
+	RefreshInteractionPrompt();
+}
+
+void ADoomsdayDevicePlayerController::RefreshInteractionPrompt()
+{
+	const ULocalPlayer* LocalPlayer = GetLocalPlayer();
+	UBasicUIManager* UIManager = LocalPlayer ? LocalPlayer->GetSubsystem<UBasicUIManager>() : nullptr;
+	if (!UIManager)
+	{
+		return;
+	}
+
+	// checked, unlike the sort in PlayerTick: a stale interaction clears the prompt instead of crashing
+	const UInteractionComponent* Interaction = ActiveInteraction.Get();
+	if (!Interaction)
+	{
+		if (bPromptPushed)
+		{
+			bPromptPushed = false;
+			PromptSource = nullptr;
+			CurrentPrompt = FInteractionPrompt();
+
+			UIManager->NotifyInteractionPromptCleared();
+		}
+
+		return;
+	}
+
+	const ADoomsdayDeviceCharacter* PlayerCharacter = Cast<ADoomsdayDeviceCharacter>(GetPawn());
+	const FGameplayTag EquippedToolTag = PlayerCharacter ? PlayerCharacter->GetEquippedToolTag() : FGameplayTag();
+
+	const FInteractionPrompt NewPrompt = Interaction->EvaluatePrompt(EquippedToolTag);
+
+	// the PromptSource term re-pushes when targeting switches to a different component that happens
+	// to produce the same text
+	if (bPromptPushed && PromptSource == ActiveInteraction && NewPrompt.IsEquivalentTo(CurrentPrompt))
+	{
+		return;
+	}
+
+	CurrentPrompt = NewPrompt;
+	PromptSource = ActiveInteraction;
+	bPromptPushed = true;
+
+	UE_LOG(LogDoomsdayDevice, Verbose, TEXT("Interaction prompt: '%s' (CanUse=%d)"), *CurrentPrompt.PromptText.ToString(), CurrentPrompt.bCanUse ? 1 : 0);
+
+	UIManager->NotifyInteractionPromptChanged(CurrentPrompt);
 }
 
 void ADoomsdayDevicePlayerController::OnInteractionUsed()
@@ -224,7 +283,10 @@ void ADoomsdayDevicePlayerController::OnInteractionUsed()
 		ADoomsdayDeviceCharacter* PlayerCharacter = Cast<ADoomsdayDeviceCharacter>(GetPawn());
 		const FGameplayTag EquippedToolTag = PlayerCharacter ? PlayerCharacter->GetEquippedToolTag() : FGameplayTag();
 
-		if (ActiveInteraction->IsToolRequirementMet(EquippedToolTag))
+		// same evaluation the prompt shows, so an EvaluatePrompt override that blocks for a new
+		// reason also blocks the press - the two can never disagree. Re-evaluated rather than read
+		// from CurrentPrompt to cover a press landing before the first tick after activation.
+		if (ActiveInteraction->EvaluatePrompt(EquippedToolTag).bCanUse)
 		{
 			// animate only for interactions that actually required a tool; the matched tool is guaranteed equipped here
 			if (PlayerCharacter && ActiveInteraction->RequiredToolTag.IsValid())

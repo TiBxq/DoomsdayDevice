@@ -3,9 +3,13 @@
 
 #include "Components/ArrowComponent.h"
 #include "GameplayTagContainer.h"
+
+#include "Gameplay/InteractionPrompt.h"
+
 #include "InteractionComponent.generated.h"
 
 class APlayerCameraManager;
+class UInteractionPromptData;
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FPlayerInInteractionEvent, TWeakObjectPtr<class UInteractionComponent> /*Interaction*/);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FInteractionComponentEvent);
@@ -36,6 +40,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interaction", meta = (Categories = "Flow.Items.Tools"))
 	FGameplayTag RequiredToolTag;
 
+	/** Prompt shown while targeting this. Leave unset for the project default (UPlayerSettings::DefaultPrompt). */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interaction")
+	TObjectPtr<UInteractionPromptData> Prompt;
+
 private:
 	bool bCanInteract;
 	TWeakObjectPtr<APlayerCameraManager> CameraManager;
@@ -51,6 +59,30 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Interaction")
 	bool IsToolRequirementMet(const FGameplayTag& EquippedToolTag) const;
+
+	/**
+	 * Current prompt for this interaction. Called every frame while the player targets it, so
+	 * overrides must be cheap. The default implementation blocks on RequiredToolTag; override it to
+	 * add other block reasons (slot occupied, hands full, story state) without touching the player
+	 * controller or the UI - the controller gates the actual Use press on this too.
+	 *
+	 * Override _Implementation and call Super::EvaluatePrompt_Implementation, never Super::EvaluatePrompt.
+	 */
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Interaction")
+	FInteractionPrompt EvaluatePrompt(const FGameplayTag& EquippedToolTag) const;
+	virtual FInteractionPrompt EvaluatePrompt_Implementation(const FGameplayTag& EquippedToolTag) const;
+
+	/** Prompt, or UPlayerSettings::GetDefaultPrompt() when this interaction leaves it unset. */
+	UFUNCTION(BlueprintPure, Category = "Interaction")
+	const UInteractionPromptData* GetPromptData() const;
+
+	/** The prompt asset's UseText, or the built-in fallback when nothing is configured. */
+	UFUNCTION(BlueprintPure, Category = "Interaction")
+	FText GetResolvedUseText() const;
+
+	/** The prompt asset's BlockedText, or the "<Tool> required" / generic text from UPlayerSettings. */
+	UFUNCTION(BlueprintPure, Category = "Interaction")
+	FText GetResolvedBlockedText() const;
 
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 

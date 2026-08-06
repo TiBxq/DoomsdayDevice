@@ -4,6 +4,7 @@
 
 #include "DoomsdayDeviceCharacter.h"
 #include "Gameplay/InventorySubsystem.h"
+#include "Gameplay/ToolSlotLibrary.h"
 #include "Player/PlayerSettings.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(ToolSlotsWidget)
@@ -69,17 +70,10 @@ void UToolSlotsWidget::SetEquippedSlot(const int32 NewSlotIndex)
 
 int32 UToolSlotsWidget::GetNumToolSlots()
 {
-	return GetDefault<UPlayerSettings>()->ToolSlots.Num();
+	return UToolSlotLibrary::GetNumToolSlots();
 }
 
 bool UToolSlotsWidget::GetToolSlotDefinition(const int32 SlotIndex, FToolSlotDefinition& OutDefinition)
 {
-	const TArray<FToolSlotDefinition>& ToolSlots = GetDefault<UPlayerSettings>()->ToolSlots;
-	if (!ToolSlots.IsValidIndex(SlotIndex))
-	{
-		return false;
-	}
-
-	OutDefinition = ToolSlots[SlotIndex];
-	return true;
+	return UToolSlotLibrary::GetToolSlotDefinition(SlotIndex, OutDefinition);
 }

@@ -2,11 +2,17 @@
 
 #include "Gameplay/InteractionComponent.h"
 
+#include "Gameplay/InteractionPromptData.h"
+#include "Gameplay/ToolSlotLibrary.h"
+#include "Player/PlayerSettings.h"
+
 #include "Camera/PlayerCameraManager.h"
 #include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(InteractionComponent)
+
+#define LOCTEXT_NAMESPACE "InteractionComponent"
 
 FPlayerInInteractionEvent UInteractionComponent::OnPlayerEnter;
 FPlayerInInteractionEvent UInteractionComponent::OnPlayerExit;
@@ -65,6 +71,55 @@ bool UInteractionComponent::IsToolRequirementMet(const FGameplayTag& EquippedToo
 	return !RequiredToolTag.IsValid() || EquippedToolTag.MatchesTag(RequiredToolTag);
 }
 
+FInteractionPrompt UInteractionComponent::EvaluatePrompt_Implementation(const FGameplayTag& EquippedToolTag) const
+{
+	FInteractionPrompt Result;
+	Result.bCanUse = IsToolRequirementMet(EquippedToolTag);
+	Result.PromptText = Result.bCanUse ? GetResolvedUseText() : GetResolvedBlockedText();
+
+	return Result;
+}
+
+const UInteractionPromptData* UInteractionComponent::GetPromptData() const
+{
+	return Prompt ? Prompt.Get() : GetDefault<UPlayerSettings>()->GetDefaultPrompt();
+}
+
+FText UInteractionComponent::GetResolvedUseText() const
+{
+	const UInteractionPromptData* PromptData = GetPromptData();
+	if (PromptData && !PromptData->UseText.IsEmpty())
+	{
+		return PromptData->UseText;
+	}
+
+	// last resort, so an unconfigured project shows the old prompt rather than a blank one
+	return LOCTEXT("FallbackUseText", "Use");
+}
+
+FText UInteractionComponent::GetResolvedBlockedText() const
+{
+	// deliberately only the interaction's own asset - an assigned prompt with an empty BlockedText
+	// wants the generated "<Tool> required", not the default asset's blocked line
+	const UInteractionPromptData* PromptData = GetPromptData();
+	if (PromptData && !PromptData->BlockedText.IsEmpty())
+	{
+		return PromptData->BlockedText;
+	}
+
+	const UPlayerSettings* Settings = GetDefault<UPlayerSettings>();
+
+	const FText ToolName = UToolSlotLibrary::GetToolDisplayNameForRequirement(RequiredToolTag);
+	if (ToolName.IsEmpty())
+	{
+		return Settings->ToolRequiredText;
+	}
+
+	FFormatNamedArguments Arguments;
+	Arguments.Add(TEXT("Tool"), ToolName);
+	return FText::Format(Settings->ToolRequiredTextFormat, Arguments);
+}
+
 void UInteractionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
@@ -112,3 +167,5 @@ void UInteractionComponent::TickComponent(float DeltaTime, ELevelTick TickType, 
 		OnPlayerExit.Broadcast(this);
 	}
 }
+
+#undef LOCTEXT_NAMESPACE

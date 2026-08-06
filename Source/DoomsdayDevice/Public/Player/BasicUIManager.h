@@ -8,10 +8,13 @@
 class UUserWidget;
 class UDialogSpeakerDataAsset;
 class UDialogueWidget;
+class UInteractionPromptWidget;
 class UToolSlotsWidget;
 class UHUDWidget;
 class USoundBase;
 class UAudioComponent;
+
+struct FInteractionPrompt;
 
 /**
  *
@@ -80,10 +83,18 @@ public:
 	/** Updates the tool slots widget selection; INDEX_NONE = empty hands. */
 	void NotifyEquippedToolChanged(int32 NewSlotIndex);
 
+	// ----------- Interaction ---------------
+	/** Pushes the targeted interaction's prompt: text into the prompt widget, availability into the HUD reticle. */
+	void NotifyInteractionPromptChanged(const FInteractionPrompt& Prompt);
+
+	/** Nothing targeted: neutral reticle. Closing the prompt widget stays with the player controller. */
+	void NotifyInteractionPromptCleared();
+
 private:
 	UDialogueWidget* GetDialogueWidget(bool bOpenIfNeeded);
 	UToolSlotsWidget* GetToolSlotsWidget(bool bOpenIfNeeded);
 	UHUDWidget* GetHUDWidget(bool bOpenIfNeeded);
+	UInteractionPromptWidget* GetInteractionPromptWidget(bool bOpenIfNeeded);
 
 	/** Playback handle for the current line's voice-over; kept referenced so it isn't GC'd while playing. */
 	UPROPERTY(Transient)

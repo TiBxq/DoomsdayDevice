@@ -1,8 +1,8 @@
 #include "Gameplay/PickupComponent.h"
 
 #include "Gameplay/InventorySubsystem.h"
+#include "Gameplay/ToolSlotLibrary.h"
 #include "DoomsdayDeviceCharacter.h"
-#include "Player/PlayerSettings.h"
 
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
@@ -43,20 +43,8 @@ void UPickupComponent::HandlePickedUp()
 	{
 		if (ADoomsdayDeviceCharacter* PlayerCharacter = Cast<ADoomsdayDeviceCharacter>(UGameplayStatics::GetPlayerPawn(GetWorld(), 0)))
 		{
-			const TArray<FToolSlotDefinition>& ToolSlots = GetDefault<UPlayerSettings>()->ToolSlots;
-			int32 SlotIndex = -1;
-			int32 Index = 0;
-			for (const FToolSlotDefinition& Tool : ToolSlots)
-			{
-				if (Tool.ToolTag == ItemTag)
-				{
-					SlotIndex = Index;
-					break;
-				}
-				Index++;
-			}
-
-			if (SlotIndex >= 0)
+			const int32 SlotIndex = UToolSlotLibrary::FindToolSlotIndexByTag(ItemTag);
+			if (SlotIndex != INDEX_NONE)
 			{
 				if (PlayerCharacter->GetEquippedToolSlot() != SlotIndex)
 				{

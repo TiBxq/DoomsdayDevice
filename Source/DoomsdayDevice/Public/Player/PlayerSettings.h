@@ -6,6 +6,7 @@
 #include "PlayerSettings.generated.h"
 
 class UInputMappingContext;
+class UInteractionPromptData;
 class UUserWidget;
 class UWorld;
 
@@ -47,6 +48,25 @@ class UPlayerSettings final : public UDeveloperSettings
 	UPROPERTY(Config, EditAnywhere, Category = "Dialogue")
 	bool bDialogueAutoSkipEnabled = true;
 
+	/** Prompt used by interactions that leave their own Prompt unset. Point it at DA_Prompt_Use. */
+	UPROPERTY(Config, EditAnywhere, Category = "Interaction")
+	TSoftObjectPtr<UInteractionPromptData> DefaultPrompt;
+
+	/** Blocked prompt naming the missing tool. {Tool} is the matching ToolSlots DisplayName. */
+	UPROPERTY(Config, EditAnywhere, Category = "Interaction")
+	FText ToolRequiredTextFormat;
+
+	/** Blocked prompt used when the interaction's RequiredToolTag matches no tool slot. */
+	UPROPERTY(Config, EditAnywhere, Category = "Interaction")
+	FText ToolRequiredText;
+
+	/**
+	 * Loads DefaultPrompt on first use. The cached hard reference is what keeps the asset alive -
+	 * a soft pointer alone would let it be collected and re-loaded on a later frame, and this is
+	 * queried every tick while an interaction is targeted.
+	 */
+	const UInteractionPromptData* GetDefaultPrompt() const;
+
 	/** Static tool slots; index = hotkey number - 1. Slots unlock when their ToolTag is collected. */
 	UPROPERTY(Config, EditAnywhere, Category = "Tools")
 	TArray<FToolSlotDefinition> ToolSlots;
@@ -57,4 +77,12 @@ class UPlayerSettings final : public UDeveloperSettings
 
 	UPROPERTY(Config, EditAnywhere, Category = "Widgets")
 	TSoftObjectPtr<UInputMappingContext> ExplorationContext;
+
+private:
+	/** Resolved DefaultPrompt. Mutable because GetDefault<UPlayerSettings>() hands out a const pointer. */
+	UPROPERTY(Transient)
+	mutable TObjectPtr<UInteractionPromptData> CachedDefaultPrompt;
+
+	/** Keeps the "DefaultPrompt is not configured" warning to one line per session. */
+	mutable bool bWarnedMissingDefaultPrompt = false;
 };

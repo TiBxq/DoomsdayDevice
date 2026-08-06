@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Engine/TimerHandle.h"
 #include "Nodes/FlowNode.h"
 
 #include "FlowNode_DialogueLine.generated.h"
@@ -44,6 +45,14 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Dialogue")
 	TSoftObjectPtr<USoundBase> VoiceOver;
 
+	/** Advance this line by itself once its voice-over and its text reveal have both finished. */
+	UPROPERTY(EditAnywhere, Category = "Dialogue")
+	bool bAutoSkip = false;
+
+	/** Seconds to wait after the line has fully played before auto-advancing. */
+	UPROPERTY(EditAnywhere, Category = "Dialogue", meta = (EditCondition = "bAutoSkip", ClampMin = "0.0", ForceUnits = "s"))
+	float AutoSkipDelay = 0.f;
+
 #if WITH_EDITORONLY_DATA
 	UPROPERTY(EditAnywhere, Category = "Dialogue")
 	FString DevComment;
@@ -56,6 +65,13 @@ protected:
 
 	UFUNCTION()
 	void OnDialogueLineCompleted();
+
+private:
+	/** Starts the auto-skip countdown; only subscribed while auto-skip is active for this line. */
+	void OnDialogueLinePresented();
+	void OnAutoSkipElapsed();
+
+	FTimerHandle AutoSkipTimerHandle;
 
 #if WITH_EDITOR
 public:

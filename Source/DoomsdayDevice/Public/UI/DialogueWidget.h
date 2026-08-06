@@ -43,6 +43,9 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnLineRevealCompleted();
 
+	/** Same occasions as the OnLineRevealCompleted event above, for C++ observers. */
+	FSimpleMulticastDelegate OnLineRevealCompletedNative;
+
 protected:
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 

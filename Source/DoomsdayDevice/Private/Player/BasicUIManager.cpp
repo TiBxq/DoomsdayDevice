@@ -100,6 +100,10 @@ void UBasicUIManager::DisplayDialogueLine(const FText& LineText, TObjectPtr<UDia
 
 	StopDialogueVoice(); // never let a previous line's voice-over overlap the new one
 
+	// Re-bound per line: EndDialogue destroys the widget, so the subscription can't outlive it.
+	Widget->OnLineRevealCompletedNative.RemoveAll(this);
+	Widget->OnLineRevealCompletedNative.AddUObject(this, &UBasicUIManager::OnDialogueLineRevealCompleted);
+
 	if (VoiceOver)
 	{
 		if (UWorld* World = GetWorld())
@@ -113,7 +117,9 @@ void UBasicUIManager::DisplayDialogueLine(const FText& LineText, TObjectPtr<UDia
 		}
 	}
 
-	// Starts the typewriter reveal, so text and voice-over begin on the same frame.
+	// Starts the typewriter reveal, so text and voice-over begin on the same frame. An instant reveal
+	// completes inside this call and broadcasts right away - correctly, since the voice-over above is
+	// already counted as playing by then.
 	Widget->AddDialogueLine(LineText, SpeakerData);
 }
 
@@ -176,10 +182,36 @@ bool UBasicUIManager::IsDialogueVoicePlaying() const
 	return IsValid(DialogueVoiceComponent) && DialogueVoiceComponent->IsPlaying();
 }
 
+bool UBasicUIManager::IsDialogueLinePresented() const
+{
+	// Inlined rather than GetDialogueWidget(false) because this is const and must never open the widget.
+	const TSoftClassPtr<UUserWidget> DialogueWidgetClass = GetDefault<UPlayerSettings>()->DialogueWidget;
+	const UDialogueWidget* Widget = Cast<UDialogueWidget>(OpenedWidgets.FindRef(DialogueWidgetClass));
+
+	return Widget && !Widget->IsRevealing() && !IsDialogueVoicePlaying();
+}
+
+void UBasicUIManager::RefreshDialogueLinePresentation()
+{
+	if (IsDialogueLinePresented())
+	{
+		// May fire more than once per line (the continue press finishes text and audio separately);
+		// observers are expected to ignore repeats.
+		OnDialogueLinePresented.Broadcast();
+	}
+}
+
 void UBasicUIManager::OnDialogueVoiceFinished()
 {
 	// Natural end: release the handle so the state query stays accurate and the component can be collected.
 	DialogueVoiceComponent = nullptr;
+
+	RefreshDialogueLinePresentation();
+}
+
+void UBasicUIManager::OnDialogueLineRevealCompleted()
+{
+	RefreshDialogueLinePresentation();
 }
 
 void UBasicUIManager::NotifyToolSlotUnlocked(const int32 SlotIndex)

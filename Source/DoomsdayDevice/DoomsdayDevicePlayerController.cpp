@@ -269,6 +269,11 @@ void ADoomsdayDevicePlayerController::OnDialogueContinued()
 
 		if (bStoppedVoice || bSkippedReveal)
 		{
+			// The press just finished presenting the line; on an auto-skip line that starts the delay
+			// countdown. Needed for the case where only the voice-over was cut - a skipped reveal already
+			// broadcasts on its own, and the repeat is harmless.
+			UIManager->RefreshDialogueLinePresentation();
+
 			// Press consumed: the line does not advance.
 			return;
 		}

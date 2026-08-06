@@ -223,6 +223,9 @@ void UDialogueWidget::CompleteReveal()
 	}
 
 	OnLineRevealCompleted();
+
+	// After the Blueprint event, so its visuals are settled before anything advances the line.
+	OnLineRevealCompletedNative.Broadcast();
 }
 
 void UDialogueWidget::ApplyRevealedText(const int32 VisibleCount) const

@@ -1,6 +1,7 @@
 // Copyright https://github.com/MothCocoon/FlowGame/graphs/contributors
 #pragma once
 
+#include "Delegates/Delegate.h"
 #include "Subsystems/LocalPlayerSubsystem.h"
 #include "BasicUIManager.generated.h"
 
@@ -59,6 +60,19 @@ public:
 	/** True while a dialogue voice-over is audible. */
 	bool IsDialogueVoicePlaying() const;
 
+	/** True once the current line's reveal has finished and its voice-over is no longer audible. */
+	bool IsDialogueLinePresented() const;
+
+	/**
+	 * Re-evaluates the presentation state and broadcasts OnDialogueLinePresented if the line is now complete.
+	 * Call after anything that can finish a line early, e.g. the continue press cutting the voice-over.
+	 * Inert while no dialogue widget is open.
+	 */
+	void RefreshDialogueLinePresentation();
+
+	/** Fires once the current line has fully played: reveal complete and voice-over finished or cut. */
+	FSimpleMulticastDelegate OnDialogueLinePresented;
+
 	// ----------- Tools ---------------
 	/** Opens the tool slots widget if needed and marks the slot unlocked. */
 	void NotifyToolSlotUnlocked(int32 SlotIndex);
@@ -77,4 +91,6 @@ private:
 
 	UFUNCTION()
 	void OnDialogueVoiceFinished();
+
+	void OnDialogueLineRevealCompleted();
 };

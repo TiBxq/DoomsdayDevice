@@ -43,6 +43,10 @@ class UPlayerSettings final : public UDeveloperSettings
 	UPROPERTY(Config, EditAnywhere, Category = "Dialogue", meta = (ClampMin = "0.0"))
 	float DialogueVoiceStopFadeSeconds = 0.08f;
 
+	/** Master switch for dialogue auto-skip. When false, lines with Auto Skip wait for the player as usual. */
+	UPROPERTY(Config, EditAnywhere, Category = "Dialogue")
+	bool bDialogueAutoSkipEnabled = true;
+
 	/** Static tool slots; index = hotkey number - 1. Slots unlock when their ToolTag is collected. */
 	UPROPERTY(Config, EditAnywhere, Category = "Tools")
 	TArray<FToolSlotDefinition> ToolSlots;

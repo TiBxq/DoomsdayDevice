@@ -2,6 +2,7 @@
 
 #include "Gameplay/InteractionComponent.h"
 
+#include "DoomsdayDevice.h"
 #include "Gameplay/InteractionPromptData.h"
 #include "Gameplay/ToolSlotLibrary.h"
 #include "Player/PlayerSettings.h"
@@ -34,6 +35,8 @@ UInteractionComponent::UInteractionComponent(const FObjectInitializer& ObjectIni
 void UInteractionComponent::BeginPlay()
 {
 	Super::BeginPlay();
+
+	ResolveDefaultPrompt();
 
 	if (bEnabled)
 	{
@@ -80,9 +83,34 @@ FInteractionPrompt UInteractionComponent::EvaluatePrompt_Implementation(const FG
 	return Result;
 }
 
+void UInteractionComponent::ResolveDefaultPrompt()
+{
+	if (Prompt || ResolvedDefaultPrompt)
+	{
+		return;
+	}
+
+	// UPlayerSettings is config storage and never loads or caches this itself - see its class comment
+	const TSoftObjectPtr<UInteractionPromptData>& DefaultPrompt = GetDefault<UPlayerSettings>()->DefaultPrompt;
+	if (DefaultPrompt.IsNull())
+	{
+		// every interaction without its own Prompt asset lands here, so warn once for the session
+		static bool bWarnedMissingDefaultPrompt = false;
+		if (!bWarnedMissingDefaultPrompt)
+		{
+			bWarnedMissingDefaultPrompt = true;
+			UE_LOG(LogDoomsdayDevice, Warning, TEXT("Project Settings > Player > Interaction > Default Prompt is not set; interactions without their own Prompt asset fall back to the built-in text."));
+		}
+
+		return;
+	}
+
+	ResolvedDefaultPrompt = DefaultPrompt.LoadSynchronous();
+}
+
 const UInteractionPromptData* UInteractionComponent::GetPromptData() const
 {
-	return Prompt ? Prompt.Get() : GetDefault<UPlayerSettings>()->GetDefaultPrompt();
+	return Prompt ? Prompt.Get() : ResolvedDefaultPrompt.Get();
 }
 
 FText UInteractionComponent::GetResolvedUseText() const

@@ -11,7 +11,13 @@ class UUserWidget;
 class UWorld;
 
 /**
+ * Project-wide player and UI configuration, surfaced as Project Settings > Player.
  *
+ * Config storage only - no loading, no caching, no mutable state. In a packaged build this class's CDO
+ * is constructed during module init and lands in the disregard-for-GC pool, whose references the
+ * collector never traces, so a UObject pointer parked here is invisible to GC and is a fatal
+ * VerifyGCAssumptions error at runtime. Keep asset references soft and let the consumer load them and
+ * own the result.
  */
 UCLASS(Config = Game, defaultconfig, meta = (DisplayName = "Player"))
 class UPlayerSettings final : public UDeveloperSettings
@@ -48,7 +54,7 @@ class UPlayerSettings final : public UDeveloperSettings
 	UPROPERTY(Config, EditAnywhere, Category = "Dialogue")
 	bool bDialogueAutoSkipEnabled = true;
 
-	/** Prompt used by interactions that leave their own Prompt unset. Point it at DA_Prompt_Use. */
+	/** Prompt used by interactions that leave their own Prompt unset. Point it at DA_Prompt_Use. Loaded and held by UInteractionComponent. */
 	UPROPERTY(Config, EditAnywhere, Category = "Interaction")
 	TSoftObjectPtr<UInteractionPromptData> DefaultPrompt;
 
@@ -60,13 +66,6 @@ class UPlayerSettings final : public UDeveloperSettings
 	UPROPERTY(Config, EditAnywhere, Category = "Interaction")
 	FText ToolRequiredText;
 
-	/**
-	 * Loads DefaultPrompt on first use. The cached hard reference is what keeps the asset alive -
-	 * a soft pointer alone would let it be collected and re-loaded on a later frame, and this is
-	 * queried every tick while an interaction is targeted.
-	 */
-	const UInteractionPromptData* GetDefaultPrompt() const;
-
 	/** Static tool slots; index = hotkey number - 1. Slots unlock when their ToolTag is collected. */
 	UPROPERTY(Config, EditAnywhere, Category = "Tools")
 	TArray<FToolSlotDefinition> ToolSlots;
@@ -77,12 +76,4 @@ class UPlayerSettings final : public UDeveloperSettings
 
 	UPROPERTY(Config, EditAnywhere, Category = "Widgets")
 	TSoftObjectPtr<UInputMappingContext> ExplorationContext;
-
-private:
-	/** Resolved DefaultPrompt. Mutable because GetDefault<UPlayerSettings>() hands out a const pointer. */
-	UPROPERTY(Transient)
-	mutable TObjectPtr<UInteractionPromptData> CachedDefaultPrompt;
-
-	/** Keeps the "DefaultPrompt is not configured" warning to one line per session. */
-	mutable bool bWarnedMissingDefaultPrompt = false;
 };

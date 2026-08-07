@@ -47,7 +47,18 @@ public:
 private:
 	bool bCanInteract;
 	TWeakObjectPtr<APlayerCameraManager> CameraManager;
-	
+
+	/** Loads DefaultPrompt into ResolvedDefaultPrompt. Called from BeginPlay; a no-op once resolved. */
+	void ResolveDefaultPrompt();
+
+	/**
+	 * UPlayerSettings::DefaultPrompt, loaded in BeginPlay and used while Prompt is unset. The hard
+	 * reference that keeps the asset alive lives here, on a normally collected component, and must
+	 * never be cached on the settings CDO instead - see the UPlayerSettings class comment.
+	 */
+	UPROPERTY(Transient)
+	TObjectPtr<UInteractionPromptData> ResolvedDefaultPrompt;
+
 public:
 	virtual void BeginPlay() override;
 
@@ -72,7 +83,7 @@ public:
 	FInteractionPrompt EvaluatePrompt(const FGameplayTag& EquippedToolTag) const;
 	virtual FInteractionPrompt EvaluatePrompt_Implementation(const FGameplayTag& EquippedToolTag) const;
 
-	/** Prompt, or UPlayerSettings::GetDefaultPrompt() when this interaction leaves it unset. */
+	/** Prompt, or the resolved UPlayerSettings::DefaultPrompt when this interaction leaves it unset. Null before BeginPlay. */
 	UFUNCTION(BlueprintPure, Category = "Interaction")
 	const UInteractionPromptData* GetPromptData() const;
 

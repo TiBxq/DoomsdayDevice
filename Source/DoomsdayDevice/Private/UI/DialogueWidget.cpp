@@ -5,6 +5,9 @@
 
 #include "Components/RichTextBlock.h"
 
+#include "Player/BasicUIManager.h"
+#include "DoomsdayDevicePlayerController.h"
+
 namespace
 {
 	// Style row in the RichTextBlock's TextStyleSet (DT_TextStyles) with fully transparent colors
@@ -159,6 +162,22 @@ void UDialogueWidget::SetupDialogueChoices(const TArray<FText>& ChoiceTexts)
 void UDialogueWidget::ClearDialogueChoices()
 {
 	RemoveDialogueChoices();
+}
+
+void UDialogueWidget::ConfirmDialogueChoice(int32 Index)
+{
+	OnDialogueChoiceConfirmed(Index);
+}
+
+void UDialogueWidget::FinishDialogueChoiceConfirmation(int32 Index)
+{
+	if (ADoomsdayDevicePlayerController* PC = Cast<ADoomsdayDevicePlayerController>(GetWorld()->GetFirstPlayerController()))
+	{
+		if (UBasicUIManager* UIManager = PC->GetLocalPlayer()->GetSubsystem<UBasicUIManager>())
+		{
+			UIManager->OnDialogueChoiceConfirmed.Broadcast(Index);
+		}
+	}
 }
 
 bool UDialogueWidget::SkipReveal()

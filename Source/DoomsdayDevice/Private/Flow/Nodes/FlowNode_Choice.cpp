@@ -34,6 +34,11 @@ void UFlowNode_Choice::Cleanup()
 	if (ADoomsdayDevicePlayerController* PC = Cast<ADoomsdayDevicePlayerController>(GetWorld()->GetFirstPlayerController()))
 	{
 		PC->SelectDialogueChoiceEvent.RemoveAll(this);
+
+		if (UBasicUIManager* UIManager = PC->GetLocalPlayer()->GetSubsystem<UBasicUIManager>())
+		{
+			UIManager->OnDialogueChoiceConfirmed.RemoveAll(this);
+		}
 	}
 	Super::Cleanup();
 }
@@ -66,6 +71,25 @@ EDataValidationResult UFlowNode_Choice::ValidateNode()
 #endif
 
 void UFlowNode_Choice::OnChoiceSelected(int32 Index)
+{
+	if (Index >= ChoiceTexts.Num())
+	{
+		return;
+	}
+
+	if (ADoomsdayDevicePlayerController* PC = Cast<ADoomsdayDevicePlayerController>(GetWorld()->GetFirstPlayerController()))
+	{
+		if (UBasicUIManager* UIManager = PC->GetLocalPlayer()->GetSubsystem<UBasicUIManager>())
+		{
+			PC->SelectDialogueChoiceEvent.RemoveAll(this);
+
+			UIManager->ConfirmDialogueChoice(Index);
+			UIManager->OnDialogueChoiceConfirmed.AddDynamic(this, &UFlowNode_Choice::OnChoiceConfirmed);
+		}
+	}
+}
+
+void UFlowNode_Choice::OnChoiceConfirmed(int32 Index)
 {
 	if (Index >= ChoiceTexts.Num())
 	{

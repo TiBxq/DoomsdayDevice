@@ -16,6 +16,8 @@ class UAudioComponent;
 
 struct FInteractionPrompt;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FConfirmDialogueChoiceEvent, int32, Index);
+
 /**
  *
  */
@@ -53,6 +55,7 @@ public:
 
 	void SetupDialogueChoices(const TArray<FText>& ChoiceTexts);
 	void ClearDialogueChoices();
+	void ConfirmDialogueChoice(int32 Index);
 
 	/** Returns true if the open dialogue widget had a line reveal in progress and it was skipped. */
 	bool SkipDialogueLineReveal();
@@ -75,6 +78,8 @@ public:
 
 	/** Fires once the current line has fully played: reveal complete and voice-over finished or cut. */
 	FSimpleMulticastDelegate OnDialogueLinePresented;
+
+	FConfirmDialogueChoiceEvent OnDialogueChoiceConfirmed;
 
 	// ----------- Tools ---------------
 	/** Opens the tool slots widget if needed and marks the slot unlocked. */

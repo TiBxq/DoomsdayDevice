@@ -141,6 +141,14 @@ void UBasicUIManager::ClearDialogueChoices()
 	}
 }
 
+void UBasicUIManager::ConfirmDialogueChoice(int32 Index)
+{
+	if (UDialogueWidget* Widget = GetDialogueWidget(false))
+	{
+		Widget->ConfirmDialogueChoice(Index);
+	}
+}
+
 bool UBasicUIManager::SkipDialogueLineReveal()
 {
 	if (UDialogueWidget* Widget = GetDialogueWidget(false))

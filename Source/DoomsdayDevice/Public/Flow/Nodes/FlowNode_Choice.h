@@ -29,6 +29,9 @@ protected:
 	UFUNCTION()
 	void OnChoiceSelected(int32 Index);
 
+	UFUNCTION()
+	void OnChoiceConfirmed(int32 Index);
+
 #if WITH_EDITOR
 public:
 	virtual FString GetNodeDescription() const override;

@@ -24,6 +24,11 @@ public:
 
 	void ClearDialogueChoices();
 
+	void ConfirmDialogueChoice(int32 Index);
+
+	UFUNCTION(BlueprintCallable)
+	void FinishDialogueChoiceConfirmation(int32 Index);
+
 	/** Returns true if a reveal was in progress and this call completed it (press consumed). */
 	bool SkipReveal();
 
@@ -38,6 +43,9 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void RemoveDialogueChoices();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnDialogueChoiceConfirmed(int32 Index);
 
 	/** Fires when the line reveal finishes, both naturally and via SkipReveal. */
 	UFUNCTION(BlueprintImplementableEvent)

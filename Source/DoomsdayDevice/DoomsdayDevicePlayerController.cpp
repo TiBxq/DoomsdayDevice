@@ -213,7 +213,7 @@ void ADoomsdayDevicePlayerController::ActivateInteraction(const TWeakObjectPtr<U
 	}
 
 	ActiveInteraction = Interaction;
-	GetLocalPlayer()->GetSubsystem<UBasicUIManager>()->OpenWidget(GetDefault<UPlayerSettings>()->InteractionWidget);
+	GetLocalPlayer()->GetSubsystem<UBasicUIManager>()->ShowInteractionWidget();
 
 	// OpenWidget ran the widget's NativeConstruct, which pulled whatever the cache held at the time;
 	// force a push so the brand new widget is correct on its first frame
@@ -224,7 +224,7 @@ void ADoomsdayDevicePlayerController::ActivateInteraction(const TWeakObjectPtr<U
 void ADoomsdayDevicePlayerController::DeactivateInteraction()
 {
 	ActiveInteraction = nullptr;
-	GetLocalPlayer()->GetSubsystem<UBasicUIManager>()->CloseWidget(GetDefault<UPlayerSettings>()->InteractionWidget);
+	GetLocalPlayer()->GetSubsystem<UBasicUIManager>()->CloseInteractionWidget();
 
 	// resets the reticle to Idle
 	RefreshInteractionPrompt();

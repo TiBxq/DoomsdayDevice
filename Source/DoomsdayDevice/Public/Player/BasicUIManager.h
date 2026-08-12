@@ -101,6 +101,9 @@ public:
 	/** Nothing targeted: neutral reticle. Closing the prompt widget stays with the player controller. */
 	void NotifyInteractionPromptCleared();
 
+	void ShowInteractionWidget();
+	void CloseInteractionWidget();
+
 private:
 	UDialogueWidget* GetDialogueWidget(bool bOpenIfNeeded);
 	UToolSlotsWidget* GetToolSlotsWidget(bool bOpenIfNeeded);

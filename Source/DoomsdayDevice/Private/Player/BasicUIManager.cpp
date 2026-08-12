@@ -328,3 +328,22 @@ void UBasicUIManager::NotifyInteractionPromptCleared()
 		HUD->SetReticleState(EInteractionReticleState::Idle);
 	}
 }
+
+void UBasicUIManager::ShowInteractionWidget()
+{
+	if (UInteractionPromptWidget* Widget = GetInteractionPromptWidget(true))
+	{
+		Widget->SetPromptVisible(true);
+	}
+}
+
+void UBasicUIManager::CloseInteractionWidget()
+{
+	const TSoftClassPtr<UUserWidget> InteractionWidgetClass = GetDefault<UPlayerSettings>()->InteractionWidget;
+	UInteractionPromptWidget* Widget = Cast<UInteractionPromptWidget>(OpenedWidgets.FindRef(InteractionWidgetClass));
+
+	if (Widget)
+	{
+		Widget->SetPromptVisible(false);
+	}
+}

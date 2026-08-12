@@ -33,12 +33,24 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 	void BP_PromptChanged(const FInteractionPrompt& NewPrompt);
 
+	void SetPromptVisible(bool bNew);
+
 protected:
 	virtual void NativeConstruct() override;
+
+	UFUNCTION()
+	void HandleAppearFinished();
 
 	/** Optional: without a TextBlock named "Label" the designer-authored text is left alone. */
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional), Category = "Interaction")
 	TObjectPtr<UTextBlock> Label;
+
+	UPROPERTY(Transient, meta = (BindWidgetAnim))
+	TObjectPtr<UWidgetAnimation> ShowAnim;
+
+	bool bWantVisible = false;
+	bool bPlayingForward = false;
+	bool bFullyShown = false;
 
 private:
 	FInteractionPrompt Prompt;

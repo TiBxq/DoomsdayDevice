@@ -18,6 +18,8 @@ struct FInteractionPrompt;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FConfirmDialogueChoiceEvent, int32, Index);
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnDialogueCloseFinished);
+
 /**
  *
  */
@@ -76,10 +78,14 @@ public:
 	 */
 	void RefreshDialogueLinePresentation();
 
+	bool CloseDialogue();
+
 	/** Fires once the current line has fully played: reveal complete and voice-over finished or cut. */
 	FSimpleMulticastDelegate OnDialogueLinePresented;
 
 	FConfirmDialogueChoiceEvent OnDialogueChoiceConfirmed;
+
+	FOnDialogueCloseFinished OnDialogueCloseFinished;
 
 	// ----------- Tools ---------------
 	/** Opens the tool slots widget if needed and marks the slot unlocked. */

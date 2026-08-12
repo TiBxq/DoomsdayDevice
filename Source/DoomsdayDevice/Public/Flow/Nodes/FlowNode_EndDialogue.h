@@ -24,6 +24,11 @@ protected:
 protected:
 	virtual void ExecuteInput(const FName& PinName) override;
 
+	virtual void Cleanup() override;
+
+	UFUNCTION()
+	void OnDialogueClosed();
+
 #if WITH_EDITOR
 public:
 	virtual FString GetNodeDescription() const override;

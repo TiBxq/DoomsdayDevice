@@ -22,10 +22,39 @@ void UFlowNode_EndDialogue::ExecuteInput(const FName& PinName)
 		{
 			// Stop first, so ending a dialogue off a line's Displayed pin can't leave a voice talking over a closed screen.
 			UIManager->StopDialogueVoice();
-			UIManager->CloseWidget(GetDefault<UPlayerSettings>()->DialogueWidget);
-			TriggerFirstOutput(true);
+			if (UIManager->CloseDialogue())
+			{
+				UIManager->OnDialogueCloseFinished.AddDynamic(this, &UFlowNode_EndDialogue::OnDialogueClosed);
+			}
+			else
+			{
+				TriggerFirstOutput(true);
+			}
 		}
 	}
+}
+
+void UFlowNode_EndDialogue::Cleanup()
+{
+	if (ADoomsdayDevicePlayerController* PC = Cast<ADoomsdayDevicePlayerController>(GetWorld()->GetFirstPlayerController()))
+	{
+		if (UBasicUIManager* UIManager = PC->GetLocalPlayer()->GetSubsystem<UBasicUIManager>())
+		{
+			UIManager->OnDialogueCloseFinished.RemoveAll(this);
+		}
+	}
+}
+
+void UFlowNode_EndDialogue::OnDialogueClosed()
+{
+	if (ADoomsdayDevicePlayerController* PC = Cast<ADoomsdayDevicePlayerController>(GetWorld()->GetFirstPlayerController()))
+	{
+		if (UBasicUIManager* UIManager = PC->GetLocalPlayer()->GetSubsystem<UBasicUIManager>())
+		{
+			UIManager->OnDialogueCloseFinished.RemoveAll(this);
+		}
+	}
+	TriggerFirstOutput(true);
 }
 
 

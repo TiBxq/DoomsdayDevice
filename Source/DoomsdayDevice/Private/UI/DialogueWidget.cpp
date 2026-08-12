@@ -6,6 +6,7 @@
 #include "Components/RichTextBlock.h"
 
 #include "Player/BasicUIManager.h"
+#include "Player/PlayerSettings.h"
 #include "DoomsdayDevicePlayerController.h"
 
 namespace
@@ -189,6 +190,18 @@ bool UDialogueWidget::SkipReveal()
 
 	CompleteReveal();
 	return true;
+}
+
+void UDialogueWidget::FinishDialogueClose()
+{
+	if (ADoomsdayDevicePlayerController* PC = Cast<ADoomsdayDevicePlayerController>(GetWorld()->GetFirstPlayerController()))
+	{
+		if (UBasicUIManager* UIManager = PC->GetLocalPlayer()->GetSubsystem<UBasicUIManager>())
+		{
+			UIManager->CloseWidget(GetDefault<UPlayerSettings>()->DialogueWidget);
+			UIManager->OnDialogueCloseFinished.Broadcast();
+		}
+	}
 }
 
 void UDialogueWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)

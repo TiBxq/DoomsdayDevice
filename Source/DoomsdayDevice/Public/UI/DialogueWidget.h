@@ -35,6 +35,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Dialogue")
 	bool IsRevealing() const { return bIsRevealing; }
 
+	UFUNCTION(BlueprintCallable)
+	void FinishDialogueClose();
+
 	UFUNCTION(BlueprintImplementableEvent)
 	void DisplayDialogueLine(const FText& LineText, UDialogSpeakerDataAsset* SpeakerData);
 
@@ -50,6 +53,9 @@ public:
 	/** Fires when the line reveal finishes, both naturally and via SkipReveal. */
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnLineRevealCompleted();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnDialogueClose();
 
 	/** Same occasions as the OnLineRevealCompleted event above, for C++ observers. */
 	FSimpleMulticastDelegate OnLineRevealCompletedNative;

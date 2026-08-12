@@ -211,6 +211,20 @@ void UBasicUIManager::RefreshDialogueLinePresentation()
 	}
 }
 
+bool UBasicUIManager::CloseDialogue()
+{
+	const TSoftClassPtr<UUserWidget> DialogueWidgetClass = GetDefault<UPlayerSettings>()->DialogueWidget;
+	UDialogueWidget* Widget = Cast<UDialogueWidget>(OpenedWidgets.FindRef(DialogueWidgetClass));
+
+	if (Widget)
+	{
+		Widget->OnDialogueClose();
+		return true;
+	}
+
+	return false;
+}
+
 void UBasicUIManager::OnDialogueVoiceFinished()
 {
 	// Natural end: release the handle so the state query stays accurate and the component can be collected.

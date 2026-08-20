@@ -54,6 +54,14 @@ class UPlayerSettings final : public UDeveloperSettings
 	UPROPERTY(Config, EditAnywhere, Category = "Dialogue")
 	bool bDialogueAutoSkipEnabled = true;
 
+	/**
+	 * How long to wait for the dialogue widget to report that its close animation finished before forcing it
+	 * shut. Closing runs through a Blueprint animation, so a widget that never calls FinishDialogueClose would
+	 * otherwise block every later dialogue. 0 disables the safety net.
+	 */
+	UPROPERTY(Config, EditAnywhere, Category = "Dialogue", meta = (ClampMin = "0.0", ForceUnits = "s"))
+	float DialogueCloseTimeoutSeconds = 2.f;
+
 	/** Prompt used by interactions that leave their own Prompt unset. Point it at DA_Prompt_Use. Loaded and held by UInteractionComponent. */
 	UPROPERTY(Config, EditAnywhere, Category = "Interaction")
 	TSoftObjectPtr<UInteractionPromptData> DefaultPrompt;

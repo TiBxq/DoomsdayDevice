@@ -3,8 +3,12 @@
 
 #include "Flow/Nodes/FlowNode_Choice.h"
 
+#include "Dialogue/DialogueSubsystem.h"
 #include "Player/BasicUIManager.h"
 #include "DoomsdayDevicePlayerController.h"
+
+#include "Engine/LocalPlayer.h"
+#include "Engine/World.h"
 
 UFlowNode_Choice::UFlowNode_Choice()
 {
@@ -17,30 +21,70 @@ UFlowNode_Choice::UFlowNode_Choice()
 
 void UFlowNode_Choice::ExecuteInput(const FName& PinName)
 {
+	// A presentation node only displays as part of the dialogue that owns the screen. Refusal means this branch
+	// is an orphan - typically one whose trigger was already in flight when an interrupt landed - so it dies
+	// here rather than painting over the dialogue that legitimately owns the screen.
+	UDialogueSubsystem* Dialogue = GetWorld() ? GetWorld()->GetSubsystem<UDialogueSubsystem>() : nullptr;
+	if (Dialogue && !Dialogue->TryJoinSession(this))
+	{
+		Finish();
+		return;
+	}
+
 	if (ADoomsdayDevicePlayerController* PC = Cast<ADoomsdayDevicePlayerController>(GetWorld()->GetFirstPlayerController()))
 	{
 		if (UBasicUIManager* UIManager = PC->GetLocalPlayer()->GetSubsystem<UBasicUIManager>())
 		{
+			// Bound before the Displayed branch runs, and inside this block: arming a choice with no buttons on
+			// screen would leave the player unable to answer it. Re-triggering an already-active node re-runs
+			// ExecuteInput without re-running OnActivate, so pair the bind with a RemoveDynamic - a plain
+			// AddDynamic double-binds and one keypress then confirms the choice twice.
+			PC->SelectDialogueChoiceEvent.RemoveDynamic(this, &UFlowNode_Choice::OnChoiceSelected);
+			PC->SelectDialogueChoiceEvent.AddDynamic(this, &UFlowNode_Choice::OnChoiceSelected);
+
 			UIManager->SetupDialogueChoices(ChoiceTexts);
 			TriggerOutput(TEXT("Displayed"));
 		}
-
-		PC->SelectDialogueChoiceEvent.AddDynamic(this, &UFlowNode_Choice::OnChoiceSelected);
 	}
 }
 
 void UFlowNode_Choice::Cleanup()
 {
-	if (ADoomsdayDevicePlayerController* PC = Cast<ADoomsdayDevicePlayerController>(GetWorld()->GetFirstPlayerController()))
+	const UWorld* World = GetWorld();
+	if (ADoomsdayDevicePlayerController* PC = World ? Cast<ADoomsdayDevicePlayerController>(World->GetFirstPlayerController()) : nullptr)
 	{
 		PC->SelectDialogueChoiceEvent.RemoveAll(this);
 
 		if (UBasicUIManager* UIManager = PC->GetLocalPlayer()->GetSubsystem<UBasicUIManager>())
 		{
 			UIManager->OnDialogueChoiceConfirmed.RemoveAll(this);
+
+			// The only teardown an aborted node gets, so the buttons must come off here rather than on the
+			// confirmed path. TriggerOutput runs Finish() -> Cleanup() before the downstream branch, so this
+			// still clears ahead of the next line on the normal path too.
+			UIManager->ClearDialogueChoices();
 		}
 	}
+
+	if (UDialogueSubsystem* Dialogue = World ? World->GetSubsystem<UDialogueSubsystem>() : nullptr)
+	{
+		Dialogue->LeaveSession(this);
+	}
+
 	Super::Cleanup();
+}
+
+void UFlowNode_Choice::ForceFinishNode()
+{
+	Super::ForceFinishNode(); // cleans up AddOns and fires the Blueprint hook - it does not finish the node
+
+	// UFlowNodeBase::ForceFinishNode is only a notification; nothing in the Flow plugin ever finishes the node
+	// for us. Finish() deactivates, runs Cleanup() and drops this node from the asset's ActiveNodes without
+	// triggering any output pin, so an aborted dialogue branch stops here instead of running on.
+	if (!HasFinished())
+	{
+		Finish();
+	}
 }
 
 #if WITH_EDITOR 
@@ -112,11 +156,7 @@ void UFlowNode_Choice::OnChoiceConfirmed(int32 Index)
 		break;
 	}
 
-	if (ADoomsdayDevicePlayerController* PC = Cast<ADoomsdayDevicePlayerController>(GetWorld()->GetFirstPlayerController()))
-	{
-		if (UBasicUIManager* UIManager = PC->GetLocalPlayer()->GetSubsystem<UBasicUIManager>())
-		{
-			UIManager->ClearDialogueChoices();
-		}
-	}
+	// No ClearDialogueChoices() here: TriggerOutput(.., true) already ran Finish() -> Cleanup(), which clears.
+	// Clearing after the trigger used to race the downstream branch - whether it landed before or after depended
+	// on FlowAsset's deferred-transition scope stack, i.e. on graph topology.
 }

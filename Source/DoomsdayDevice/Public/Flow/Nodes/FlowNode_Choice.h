@@ -26,6 +26,9 @@ protected:
 
 	virtual void Cleanup() override;
 
+	/** External abort (dialogue interruption): die without triggering any output pin. */
+	virtual void ForceFinishNode() override;
+
 	UFUNCTION()
 	void OnChoiceSelected(int32 Index);
 

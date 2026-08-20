@@ -80,6 +80,9 @@ public:
 
 	bool CloseDialogue();
 
+	/** Tear the dialogue screen down without waiting on its close animation. Watchdog path only. */
+	void ForceCloseDialogueWidget();
+
 	/** Fires once the current line has fully played: reveal complete and voice-over finished or cut. */
 	FSimpleMulticastDelegate OnDialogueLinePresented;
 

@@ -3,9 +3,13 @@
 
 #include "Flow/Nodes/FlowNode_EndDialogue.h"
 
+#include "Dialogue/DialogueSubsystem.h"
 #include "Player/BasicUIManager.h"
 #include "Player/PlayerSettings.h"
 #include "DoomsdayDevicePlayerController.h"
+
+#include "Engine/LocalPlayer.h"
+#include "Engine/World.h"
 
 UFlowNode_EndDialogue::UFlowNode_EndDialogue()
 {
@@ -16,44 +20,36 @@ UFlowNode_EndDialogue::UFlowNode_EndDialogue()
 
 void UFlowNode_EndDialogue::ExecuteInput(const FName& PinName)
 {
-	if (ADoomsdayDevicePlayerController* PC = Cast<ADoomsdayDevicePlayerController>(GetWorld()->GetFirstPlayerController()))
+	// Closing is arbitrated rather than done here: the subsystem knows whether this node still owns the screen.
+	// An End Dialogue reached from a cancelled dialogue's Cancelled branch must not close the screen that the
+	// interrupting dialogue has already taken - it just passes straight through to its output.
+	const UWorld* World = GetWorld();
+	if (UDialogueSubsystem* Dialogue = World ? World->GetSubsystem<UDialogueSubsystem>() : nullptr)
+	{
+		Dialogue->RequestEndDialogue(this);
+		return;
+	}
+
+	// No arbitration available: fall back to closing the screen directly.
+	if (const ADoomsdayDevicePlayerController* PC = World ? Cast<ADoomsdayDevicePlayerController>(World->GetFirstPlayerController()) : nullptr)
 	{
 		if (UBasicUIManager* UIManager = PC->GetLocalPlayer()->GetSubsystem<UBasicUIManager>())
 		{
-			// Stop first, so ending a dialogue off a line's Displayed pin can't leave a voice talking over a closed screen.
 			UIManager->StopDialogueVoice();
-			if (UIManager->CloseDialogue())
-			{
-				UIManager->OnDialogueCloseFinished.AddDynamic(this, &UFlowNode_EndDialogue::OnDialogueClosed);
-			}
-			else
-			{
-				TriggerFirstOutput(true);
-			}
+			UIManager->ForceCloseDialogueWidget();
 		}
 	}
+
+	TriggerFirstOutput(true);
 }
 
 void UFlowNode_EndDialogue::Cleanup()
 {
-	if (ADoomsdayDevicePlayerController* PC = Cast<ADoomsdayDevicePlayerController>(GetWorld()->GetFirstPlayerController()))
-	{
-		if (UBasicUIManager* UIManager = PC->GetLocalPlayer()->GetSubsystem<UBasicUIManager>())
-		{
-			UIManager->OnDialogueCloseFinished.RemoveAll(this);
-		}
-	}
+	Super::Cleanup();
 }
 
-void UFlowNode_EndDialogue::OnDialogueClosed()
+void UFlowNode_EndDialogue::OnDialogueCloseCompleted()
 {
-	if (ADoomsdayDevicePlayerController* PC = Cast<ADoomsdayDevicePlayerController>(GetWorld()->GetFirstPlayerController()))
-	{
-		if (UBasicUIManager* UIManager = PC->GetLocalPlayer()->GetSubsystem<UBasicUIManager>())
-		{
-			UIManager->OnDialogueCloseFinished.RemoveAll(this);
-		}
-	}
 	TriggerFirstOutput(true);
 }
 

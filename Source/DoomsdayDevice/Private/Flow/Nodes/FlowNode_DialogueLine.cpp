@@ -3,11 +3,14 @@
 
 #include "Flow/Nodes/FlowNode_DialogueLine.h"
 
+#include "Dialogue/DialogueSubsystem.h"
 #include "Player/BasicUIManager.h"
 #include "Player/PlayerSettings.h"
 #include "DoomsdayDevicePlayerController.h"
 #include "Dialogue/DialogSpeakerDataAsset.h"
 
+#include "Engine/LocalPlayer.h"
+#include "Engine/World.h"
 #include "Sound/SoundBase.h"
 #include "TimerManager.h"
 
@@ -24,6 +27,16 @@ UFlowNode_DialogueLine::UFlowNode_DialogueLine()
 
 void UFlowNode_DialogueLine::ExecuteInput(const FName& PinName)
 {
+	// A presentation node only displays as part of the dialogue that owns the screen. Refusal means this branch
+	// is an orphan - typically one whose trigger was already in flight when an interrupt landed - so it dies
+	// here rather than painting over the dialogue that legitimately owns the screen.
+	UDialogueSubsystem* Dialogue = GetWorld() ? GetWorld()->GetSubsystem<UDialogueSubsystem>() : nullptr;
+	if (Dialogue && !Dialogue->TryJoinSession(this))
+	{
+		Finish();
+		return;
+	}
+
 	if (ADoomsdayDevicePlayerController* PC = Cast<ADoomsdayDevicePlayerController>(GetWorld()->GetFirstPlayerController()))
 	{
 		if (UBasicUIManager* UIManager = PC->GetLocalPlayer()->GetSubsystem<UBasicUIManager>())
@@ -67,7 +80,26 @@ void UFlowNode_DialogueLine::Cleanup()
 	}
 	AutoSkipTimerHandle.Invalidate();
 
+	const UWorld* CleanupWorld = GetWorld();
+	if (UDialogueSubsystem* Dialogue = CleanupWorld ? CleanupWorld->GetSubsystem<UDialogueSubsystem>() : nullptr)
+	{
+		Dialogue->LeaveSession(this);
+	}
+
 	Super::Cleanup();
+}
+
+void UFlowNode_DialogueLine::ForceFinishNode()
+{
+	Super::ForceFinishNode(); // cleans up AddOns and fires the Blueprint hook - it does not finish the node
+
+	// UFlowNodeBase::ForceFinishNode is only a notification; nothing in the Flow plugin ever finishes the node
+	// for us. Finish() deactivates, runs Cleanup() and drops this node from the asset's ActiveNodes without
+	// triggering any output pin, so an aborted dialogue branch stops here instead of running on.
+	if (!HasFinished())
+	{
+		Finish();
+	}
 }
 
 void UFlowNode_DialogueLine::OnDialogueLineCompleted()

@@ -17,17 +17,13 @@ class DOOMSDAYDEVICE_API UFlowNode_EndDialogue : public UFlowNode
 public:
 	UFlowNode_EndDialogue();
 
-protected:
-	UPROPERTY(EditAnywhere, Category = "Dialogue")
-	TArray<FText> ChoiceTexts;
+	/** Called by UDialogueSubsystem once the screen is closed - or straight away if this node does not own it. */
+	void OnDialogueCloseCompleted();
 
 protected:
 	virtual void ExecuteInput(const FName& PinName) override;
 
 	virtual void Cleanup() override;
-
-	UFUNCTION()
-	void OnDialogueClosed();
 
 #if WITH_EDITOR
 public:

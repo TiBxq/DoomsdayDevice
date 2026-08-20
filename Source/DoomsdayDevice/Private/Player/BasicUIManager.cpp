@@ -225,6 +225,14 @@ bool UBasicUIManager::CloseDialogue()
 	return false;
 }
 
+void UBasicUIManager::ForceCloseDialogueWidget()
+{
+	// Deliberately skips OnDialogueClose and OnDialogueCloseFinished: this exists precisely for the case where
+	// that Blueprint round-trip never came back, so waiting on it again would hang in the same place.
+	StopDialogueVoice();
+	CloseWidget(GetDefault<UPlayerSettings>()->DialogueWidget);
+}
+
 void UBasicUIManager::OnDialogueVoiceFinished()
 {
 	// Natural end: release the handle so the state query stays accurate and the component can be collected.

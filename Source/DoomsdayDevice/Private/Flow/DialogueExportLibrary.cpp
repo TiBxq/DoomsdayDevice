@@ -143,6 +143,8 @@ void UDialogueExportLibrary::GatherDialogueLines(const FString& RootPath, bool b
 			Row.SpeakerName = SpeakerData ? SpeakerData->DisplayName.ToString() : FString();
 			Row.DialogueLineText = DialogueNode->GetLineText().ToString();
 			Row.DevComment = DialogueNode->GetDevComment();
+			// Name straight off the soft path - resolving it would needlessly load 800+ sound assets.
+			Row.VoiceOver = DialogueNode->GetVoiceOver().GetAssetName();
 		}
 
 		if (bAssignedInThisAsset)
@@ -208,7 +210,7 @@ FString UDialogueExportLibrary::GetDefaultExportFilePath()
 
 FString UDialogueExportLibrary::BuildCsv(const TArray<FDialogueLineExportRow>& Rows)
 {
-	FString Csv = TEXT("FlowAssetName,DialogueID,SpeakerName,DialogueLineText,DevComment\r\n");
+	FString Csv = TEXT("FlowAssetName,DialogueID,SpeakerName,DialogueLineText,DevComment,VoiceOver\r\n");
 
 	for (const FDialogueLineExportRow& Row : Rows)
 	{
@@ -221,6 +223,8 @@ FString UDialogueExportLibrary::BuildCsv(const TArray<FDialogueLineExportRow>& R
 		Csv += DoomsdayDialogueExport::EscapeCsvField(Row.DialogueLineText);
 		Csv += TEXT(",");
 		Csv += DoomsdayDialogueExport::EscapeCsvField(Row.DevComment);
+		Csv += TEXT(",");
+		Csv += DoomsdayDialogueExport::EscapeCsvField(Row.VoiceOver);
 		Csv += TEXT("\r\n");
 	}
 

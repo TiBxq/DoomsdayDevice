@@ -28,6 +28,10 @@ struct FDialogueLineExportRow
 
 	UPROPERTY(BlueprintReadOnly, Category = "Dialogue Export")
 	FString DevComment;
+
+	/** Asset name of the line's assigned voice-over; empty when it has no VO. */
+	UPROPERTY(BlueprintReadOnly, Category = "Dialogue Export")
+	FString VoiceOver;
 };
 
 /**

@@ -25,6 +25,7 @@ public:
 	const FText& GetLineText() const { return LineText; }
 	const FString& GetDialogueID() const { return DialogueID; }
 	const UDialogSpeakerDataAsset* GetSpeakerData() const { return SpeakerData; }
+	const TSoftObjectPtr<USoundBase>& GetVoiceOver() const { return VoiceOver; }
 
 #if WITH_EDITOR
 	void SetDialogueID(const FString& InDialogueID);

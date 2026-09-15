@@ -134,6 +134,13 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Tools")
 	void UnequipTool();
 
+	/**
+	 * Steps to the next (Direction > 0) or previous (Direction < 0) unlocked slot, wrapping around. Empty hands is
+	 * one stop in the ring, so with a single tool unlocked this shows and hides it. Ignored while carrying.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Tools")
+	void CycleTool(int32 Direction);
+
 	/** Plays the equipped tool's use montage on the first-person arms. No-op with empty hands or no montage. */
 	UFUNCTION(BlueprintCallable, Category = "Tools")
 	void PlayEquippedToolUseMontage();

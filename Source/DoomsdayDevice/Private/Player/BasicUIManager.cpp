@@ -201,6 +201,15 @@ bool UBasicUIManager::IsDialogueLinePresented() const
 	return Widget && !Widget->IsRevealing() && !IsDialogueVoicePlaying();
 }
 
+bool UBasicUIManager::AreDialogueChoicesPending() const
+{
+	// Const lookup like IsDialogueLinePresented above: asking the question must never open the widget.
+	const TSoftClassPtr<UUserWidget> DialogueWidgetClass = GetDefault<UPlayerSettings>()->DialogueWidget;
+	const UDialogueWidget* Widget = Cast<UDialogueWidget>(OpenedWidgets.FindRef(DialogueWidgetClass));
+
+	return Widget && Widget->AreChoicesPending();
+}
+
 void UBasicUIManager::RefreshDialogueLinePresentation()
 {
 	if (IsDialogueLinePresented())

@@ -356,6 +356,40 @@ void ADoomsdayDeviceCharacter::UnequipTool()
 	OnToolUnequip(Tool);
 }
 
+void ADoomsdayDeviceCharacter::CycleTool(const int32 Direction)
+{
+	const int32 NumSlots = GetDefault<UPlayerSettings>()->ToolSlots.Num();
+	if (Direction == 0 || NumSlots == 0 || IsCarrying())
+	{
+		return;
+	}
+
+	// The ring has NumSlots + 1 stops: every slot, then empty hands at index NumSlots. At most one lap is walked,
+	// so from empty hands with nothing unlocked the wheel leaves the hands as they are.
+	const int32 NumStops = NumSlots + 1;
+	const int32 Step = Direction > 0 ? 1 : -1;
+	const int32 Start = EquippedToolSlot == INDEX_NONE ? NumSlots : EquippedToolSlot;
+
+	for (int32 Offset = 1; Offset < NumStops; ++Offset)
+	{
+		// adding NumStops keeps the operand non-negative when stepping backwards
+		const int32 Stop = (Start + Step * Offset + NumStops) % NumStops;
+
+		if (Stop == NumSlots)
+		{
+			UnequipTool();
+			return;
+		}
+
+		if (IsToolSlotUnlocked(Stop))
+		{
+			// never the equipped slot (the lap stops short of Start), so this switches rather than unequips
+			ToggleToolSlot(Stop);
+			return;
+		}
+	}
+}
+
 void ADoomsdayDeviceCharacter::PlayEquippedToolUseMontage()
 {
 	if (EquippedToolSlot == INDEX_NONE || !ToolActors.IsValidIndex(EquippedToolSlot))

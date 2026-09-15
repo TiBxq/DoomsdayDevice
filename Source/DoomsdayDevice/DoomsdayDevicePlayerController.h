@@ -104,6 +104,10 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Input")
 	TArray<UInputAction*> ToolSlotActions;
 
+	/** Mouse wheel tool cycling (Axis1D, IA_ToolCycle): wheel up steps to the previous slot, wheel down to the next */
+	UPROPERTY(EditAnywhere, Category = "Input")
+	UInputAction* ToolCycleAction;
+
 	UPROPERTY(EditAnywhere, Category = "Input")
 	UInputAction* DialogueHintAction;
 
@@ -162,4 +166,10 @@ private:
 	// -------------- Tools ------------------
 	UFUNCTION()
 	void OnToolSlotPressed(const FInputActionValue& Value, int32 SlotIndex);
+
+	UFUNCTION()
+	void OnToolCycled(const FInputActionValue& Value);
+
+	/** Shared gate for every tool-switch input: true while dialogue choices are on screen */
+	bool IsToolSwitchBlocked() const;
 };

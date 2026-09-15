@@ -35,6 +35,11 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Dialogue")
 	bool IsRevealing() const { return bIsRevealing; }
 
+	/** True while choice buttons are on screen: set when they are displayed, cleared when they are removed,
+	 * so it spans the whole lifetime of the Choice node - the confirmation animation included. */
+	UFUNCTION(BlueprintPure, Category = "Dialogue")
+	bool AreChoicesPending() const { return bChoicesPending; }
+
 	UFUNCTION(BlueprintCallable)
 	void FinishDialogueClose();
 
@@ -90,4 +95,5 @@ private:
 	int32 RevealedVisibleChars = 0;
 	float RevealAccumulator = 0.f;
 	bool bIsRevealing = false;
+	bool bChoicesPending = false;
 };

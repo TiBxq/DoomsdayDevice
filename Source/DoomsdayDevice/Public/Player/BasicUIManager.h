@@ -71,6 +71,9 @@ public:
 	/** True once the current line's reveal has finished and its voice-over is no longer audible. */
 	bool IsDialogueLinePresented() const;
 
+	/** True while dialogue choice buttons are on screen, i.e. while a Choice node owns keys 1-4. */
+	bool AreDialogueChoicesPending() const;
+
 	/**
 	 * Re-evaluates the presentation state and broadcasts OnDialogueLinePresented if the line is now complete.
 	 * Call after anything that can finish a line early, e.g. the continue press cutting the voice-over.

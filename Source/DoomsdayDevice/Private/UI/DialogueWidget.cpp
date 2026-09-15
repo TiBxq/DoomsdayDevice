@@ -157,11 +157,13 @@ void UDialogueWidget::AddDialogueLine(const FText& LineText, TObjectPtr<UDialogS
 
 void UDialogueWidget::SetupDialogueChoices(const TArray<FText>& ChoiceTexts)
 {
+	bChoicesPending = true;
 	DisplayDialogueChoices(ChoiceTexts);
 }
 
 void UDialogueWidget::ClearDialogueChoices()
 {
+	bChoicesPending = false;
 	RemoveDialogueChoices();
 }
 

@@ -150,6 +150,11 @@ void ADoomsdayDevicePlayerController::SetupInputComponent()
 					EnhancedInputComponent->BindAction(ToolSlotActions[SlotIndex], ETriggerEvent::Started, this, &ADoomsdayDevicePlayerController::OnToolSlotPressed, SlotIndex);
 				}
 			}
+
+			if (ToolCycleAction)
+			{
+				EnhancedInputComponent->BindAction(ToolCycleAction, ETriggerEvent::Triggered, this, &ADoomsdayDevicePlayerController::OnToolCycled);
+			}
 		}
 	}
 	
@@ -382,17 +387,38 @@ void ADoomsdayDevicePlayerController::OnHintFactChanged(const FGameplayTag& Chan
 
 void ADoomsdayDevicePlayerController::OnToolSlotPressed(const FInputActionValue& Value, int32 SlotIndex)
 {
-	// keys 1-4 are shared with the dialogue choice actions; dialogue wins while its screen is open
-	if (const UBasicUIManager* UIManager = GetLocalPlayer()->GetSubsystem<UBasicUIManager>())
+	if (IsToolSwitchBlocked())
 	{
-		if (UIManager->IsWidgetOpen(GetDefault<UPlayerSettings>()->DialogueWidget))
-		{
-			return;
-		}
+		return;
 	}
 
 	if (ADoomsdayDeviceCharacter* PlayerCharacter = Cast<ADoomsdayDeviceCharacter>(GetPawn()))
 	{
 		PlayerCharacter->ToggleToolSlot(SlotIndex);
 	}
+}
+
+void ADoomsdayDevicePlayerController::OnToolCycled(const FInputActionValue& Value)
+{
+	const float WheelDelta = Value.Get<float>();
+	if (FMath::IsNearlyZero(WheelDelta) || IsToolSwitchBlocked())
+	{
+		return;
+	}
+
+	if (ADoomsdayDeviceCharacter* PlayerCharacter = Cast<ADoomsdayDeviceCharacter>(GetPawn()))
+	{
+		// wheel up (positive) steps back and wheel down steps forward, the usual shooter weapon-switch feel;
+		// a fast flick spanning several notches in one frame still moves a single step
+		PlayerCharacter->CycleTool(WheelDelta > 0.f ? -1 : 1);
+	}
+}
+
+bool ADoomsdayDevicePlayerController::IsToolSwitchBlocked() const
+{
+	// keys 1-4 are shared with the dialogue choice actions; dialogue only wins while a Choice node has its
+	// buttons on screen - during plain dialogue lines the keys stay with the tool slots. The wheel shares no
+	// keys with dialogue but follows the same rule, so the hands never change while a choice is being made.
+	const UBasicUIManager* UIManager = GetLocalPlayer()->GetSubsystem<UBasicUIManager>();
+	return UIManager && UIManager->AreDialogueChoicesPending();
 }

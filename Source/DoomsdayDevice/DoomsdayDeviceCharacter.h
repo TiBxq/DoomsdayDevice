@@ -134,10 +134,19 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Tools")
 	void UnequipTool();
 
+	/** Puts exactly this slot in hands (INDEX_NONE = empty hands). Same refusals as ToggleToolSlot: locked slots and carrying. */
+	UFUNCTION(BlueprintCallable, Category = "Tools")
+	void EquipToolSlot(int32 SlotIndex);
+
 	/**
-	 * Steps to the next (Direction > 0) or previous (Direction < 0) unlocked slot, wrapping around. Empty hands is
-	 * one stop in the ring, so with a single tool unlocked this shows and hides it. Ignored while carrying.
+	 * Slot one step from FromSlot: the next (Direction > 0) or previous (Direction < 0) unlocked slot, wrapping
+	 * around. Empty hands (INDEX_NONE) is one stop in the ring, so with a single tool unlocked the result
+	 * alternates between it and empty hands. Returns FromSlot when there is nowhere else to go.
 	 */
+	UFUNCTION(BlueprintPure, Category = "Tools")
+	int32 GetCycledToolSlot(int32 FromSlot, int32 Direction) const;
+
+	/** Equips GetCycledToolSlot from the equipped slot. Ignored while carrying. */
 	UFUNCTION(BlueprintCallable, Category = "Tools")
 	void CycleTool(int32 Direction);
 

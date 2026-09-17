@@ -5,6 +5,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
 #include "Engine/LocalPlayer.h"
+#include "TimerManager.h"
 #include "InputMappingContext.h"
 #include "DoomsdayDeviceCameraManager.h"
 #include "DoomsdayDeviceCharacter.h"
@@ -387,30 +388,33 @@ void ADoomsdayDevicePlayerController::OnHintFactChanged(const FGameplayTag& Chan
 
 void ADoomsdayDevicePlayerController::OnToolSlotPressed(const FInputActionValue& Value, int32 SlotIndex)
 {
-	if (IsToolSwitchBlocked())
+	const ADoomsdayDeviceCharacter* PlayerCharacter = Cast<ADoomsdayDeviceCharacter>(GetPawn());
+	if (!PlayerCharacter || IsToolSwitchBlocked() || PlayerCharacter->IsCarrying() || !PlayerCharacter->IsToolSlotUnlocked(SlotIndex))
 	{
 		return;
 	}
 
-	if (ADoomsdayDeviceCharacter* PlayerCharacter = Cast<ADoomsdayDeviceCharacter>(GetPawn()))
-	{
-		PlayerCharacter->ToggleToolSlot(SlotIndex);
-	}
+	// ToggleToolSlot's rule, but measured against a held switch, so a key pressed twice within the delay
+	// still ends with empty hands
+	RequestToolSlot(GetRequestedToolSlot(*PlayerCharacter) == SlotIndex ? INDEX_NONE : SlotIndex);
 }
 
 void ADoomsdayDevicePlayerController::OnToolCycled(const FInputActionValue& Value)
 {
 	const float WheelDelta = Value.Get<float>();
-	if (FMath::IsNearlyZero(WheelDelta) || IsToolSwitchBlocked())
+	const ADoomsdayDeviceCharacter* PlayerCharacter = Cast<ADoomsdayDeviceCharacter>(GetPawn());
+	if (FMath::IsNearlyZero(WheelDelta) || !PlayerCharacter || IsToolSwitchBlocked() || PlayerCharacter->IsCarrying())
 	{
 		return;
 	}
 
-	if (ADoomsdayDeviceCharacter* PlayerCharacter = Cast<ADoomsdayDeviceCharacter>(GetPawn()))
+	// wheel up (positive) steps back and wheel down steps forward, the usual shooter weapon-switch feel.
+	// Stepping from the held switch makes notches scrolled during the delay add up instead of being lost.
+	const int32 FromSlot = GetRequestedToolSlot(*PlayerCharacter);
+	const int32 TargetSlot = PlayerCharacter->GetCycledToolSlot(FromSlot, WheelDelta > 0.f ? -1 : 1);
+	if (TargetSlot != FromSlot)
 	{
-		// wheel up (positive) steps back and wheel down steps forward, the usual shooter weapon-switch feel;
-		// a fast flick spanning several notches in one frame still moves a single step
-		PlayerCharacter->CycleTool(WheelDelta > 0.f ? -1 : 1);
+		RequestToolSlot(TargetSlot);
 	}
 }
 
@@ -421,4 +425,55 @@ bool ADoomsdayDevicePlayerController::IsToolSwitchBlocked() const
 	// keys with dialogue but follows the same rule, so the hands never change while a choice is being made.
 	const UBasicUIManager* UIManager = GetLocalPlayer()->GetSubsystem<UBasicUIManager>();
 	return UIManager && UIManager->AreDialogueChoicesPending();
+}
+
+int32 ADoomsdayDevicePlayerController::GetRequestedToolSlot(const ADoomsdayDeviceCharacter& PlayerCharacter) const
+{
+	return bToolSwitchPending ? PendingToolSlot : PlayerCharacter.GetEquippedToolSlot();
+}
+
+void ADoomsdayDevicePlayerController::RequestToolSlot(const int32 TargetSlot)
+{
+	PendingToolSlot = TargetSlot;
+	bToolSwitchPending = true;
+
+	// within the delay the request is only held; OnToolSwitchDelayElapsed applies whatever is held last
+	if (!GetWorldTimerManager().IsTimerActive(ToolSwitchDelayTimer))
+	{
+		ApplyPendingToolSwitch();
+	}
+}
+
+void ADoomsdayDevicePlayerController::ApplyPendingToolSwitch()
+{
+	if (!bToolSwitchPending)
+	{
+		return;
+	}
+	bToolSwitchPending = false;
+
+	// checked again rather than trusted from request time: a choice can appear while a switch is held
+	ADoomsdayDeviceCharacter* PlayerCharacter = Cast<ADoomsdayDeviceCharacter>(GetPawn());
+	if (!PlayerCharacter || IsToolSwitchBlocked())
+	{
+		return;
+	}
+
+	const int32 PreviousSlot = PlayerCharacter->GetEquippedToolSlot();
+	PlayerCharacter->EquipToolSlot(PendingToolSlot);
+
+	// only a switch that actually happened starts the delay, so a refused or no-op request costs nothing
+	const float Delay = GetDefault<UPlayerSettings>()->ToolSwitchDelaySeconds;
+	if (Delay > 0.f && PlayerCharacter->GetEquippedToolSlot() != PreviousSlot)
+	{
+		GetWorldTimerManager().SetTimer(ToolSwitchDelayTimer, this, &ADoomsdayDevicePlayerController::OnToolSwitchDelayElapsed, Delay);
+	}
+}
+
+void ADoomsdayDevicePlayerController::OnToolSwitchDelayElapsed()
+{
+	// The engine keeps reporting a timer as active until its callback returns; forget it first so the delay
+	// reads as over from here on.
+	ToolSwitchDelayTimer.Invalidate();
+	ApplyPendingToolSwitch();
 }

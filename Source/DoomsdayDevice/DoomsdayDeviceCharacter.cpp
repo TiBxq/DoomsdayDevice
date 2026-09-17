@@ -356,19 +356,37 @@ void ADoomsdayDeviceCharacter::UnequipTool()
 	OnToolUnequip(Tool);
 }
 
-void ADoomsdayDeviceCharacter::CycleTool(const int32 Direction)
+void ADoomsdayDeviceCharacter::EquipToolSlot(const int32 SlotIndex)
 {
-	const int32 NumSlots = GetDefault<UPlayerSettings>()->ToolSlots.Num();
-	if (Direction == 0 || NumSlots == 0 || IsCarrying())
+	if (SlotIndex == EquippedToolSlot)
 	{
 		return;
 	}
 
+	if (SlotIndex == INDEX_NONE)
+	{
+		UnequipTool();
+		return;
+	}
+
+	// not the equipped slot, so this switches rather than unequips
+	ToggleToolSlot(SlotIndex);
+}
+
+int32 ADoomsdayDeviceCharacter::GetCycledToolSlot(const int32 FromSlot, const int32 Direction) const
+{
+	const TArray<FToolSlotDefinition>& ToolSlots = GetDefault<UPlayerSettings>()->ToolSlots;
+	const int32 NumSlots = ToolSlots.Num();
+	if (Direction == 0 || NumSlots == 0)
+	{
+		return FromSlot;
+	}
+
 	// The ring has NumSlots + 1 stops: every slot, then empty hands at index NumSlots. At most one lap is walked,
-	// so from empty hands with nothing unlocked the wheel leaves the hands as they are.
+	// so from empty hands with nothing unlocked the result is empty hands again.
 	const int32 NumStops = NumSlots + 1;
 	const int32 Step = Direction > 0 ? 1 : -1;
-	const int32 Start = EquippedToolSlot == INDEX_NONE ? NumSlots : EquippedToolSlot;
+	const int32 Start = ToolSlots.IsValidIndex(FromSlot) ? FromSlot : NumSlots;
 
 	for (int32 Offset = 1; Offset < NumStops; ++Offset)
 	{
@@ -377,17 +395,21 @@ void ADoomsdayDeviceCharacter::CycleTool(const int32 Direction)
 
 		if (Stop == NumSlots)
 		{
-			UnequipTool();
-			return;
+			return INDEX_NONE;
 		}
 
 		if (IsToolSlotUnlocked(Stop))
 		{
-			// never the equipped slot (the lap stops short of Start), so this switches rather than unequips
-			ToggleToolSlot(Stop);
-			return;
+			return Stop;
 		}
 	}
+
+	return FromSlot;
+}
+
+void ADoomsdayDeviceCharacter::CycleTool(const int32 Direction)
+{
+	EquipToolSlot(GetCycledToolSlot(EquippedToolSlot, Direction));
 }
 
 void ADoomsdayDeviceCharacter::PlayEquippedToolUseMontage()

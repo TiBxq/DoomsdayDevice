@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
+#include "Engine/TimerHandle.h"
 #include "GameplayTagContainer.h"
 
 #include "Gameplay/InteractionPrompt.h"
@@ -14,6 +15,7 @@ class UInputMappingContext;
 class UUserWidget;
 class UInteractionComponent;
 class UInputAction;
+class ADoomsdayDeviceCharacter;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FContinueDialogueEvent);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FSelectDialogueChoiceEvent, int32, Index);
@@ -172,4 +174,23 @@ private:
 
 	/** Shared gate for every tool-switch input: true while dialogue choices are on screen */
 	bool IsToolSwitchBlocked() const;
+
+	/** The slot the player last asked for: a switch still being held, else what is in hands */
+	int32 GetRequestedToolSlot(const ADoomsdayDeviceCharacter& PlayerCharacter) const;
+
+	/**
+	 * Switches to TargetSlot now or, within UPlayerSettings::ToolSwitchDelaySeconds of the previous switch, holds it
+	 * until that time is up. A later request replaces the held one.
+	 */
+	void RequestToolSlot(int32 TargetSlot);
+
+	void ApplyPendingToolSwitch();
+	void OnToolSwitchDelayElapsed();
+
+	/** Runs for the switch delay after each switch made from input */
+	FTimerHandle ToolSwitchDelayTimer;
+
+	/** Held target (INDEX_NONE = empty hands); only meaningful while bToolSwitchPending */
+	int32 PendingToolSlot = INDEX_NONE;
+	bool bToolSwitchPending = false;
 };

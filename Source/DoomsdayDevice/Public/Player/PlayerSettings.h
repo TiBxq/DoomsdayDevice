@@ -78,6 +78,14 @@ class UPlayerSettings final : public UDeveloperSettings
 	UPROPERTY(Config, EditAnywhere, Category = "Tools")
 	TArray<FToolSlotDefinition> ToolSlots;
 
+	/**
+	 * Minimum time between tool switches made from input (hotkeys and mouse wheel). A switch asked for sooner is
+	 * held and made when the time is up; presses and scroll notches in between build on it, so scrolling quickly
+	 * lands on the right tool without showing each one on the way. 0 switches instantly every time.
+	 */
+	UPROPERTY(Config, EditAnywhere, Category = "Tools", meta = (ClampMin = "0.0", ForceUnits = "s"))
+	float ToolSwitchDelaySeconds = 0.2f;
+
 	// Contains debug inputs, inactive in Shipping builds
 	UPROPERTY(Config, EditAnywhere, Category = "Widgets")
 	TSoftObjectPtr<UInputMappingContext> DebugContext;

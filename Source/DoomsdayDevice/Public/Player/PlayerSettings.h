@@ -55,6 +55,13 @@ class UPlayerSettings final : public UDeveloperSettings
 	bool bDialogueAutoSkipEnabled = true;
 
 	/**
+	 * Reveal dialogue lines letter by letter. When false, each line appears in full at once: its reveal-complete
+	 * events (and with them the auto-skip countdown) fire immediately, and the continue press has no reveal to skip.
+	 */
+	UPROPERTY(Config, EditAnywhere, Category = "Dialogue")
+	bool bDialogueTypewriterEnabled = true;
+
+	/**
 	 * How long to wait for the dialogue widget to report that its close animation finished before forcing it
 	 * shut. Closing runs through a Blueprint animation, so a widget that never calls FinishDialogueClose would
 	 * otherwise block every later dialogue. 0 disables the safety net.

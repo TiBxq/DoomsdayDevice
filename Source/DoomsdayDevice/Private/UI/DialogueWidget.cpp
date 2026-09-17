@@ -236,7 +236,8 @@ void UDialogueWidget::StartReveal(const FText& LineText)
 	RevealAccumulator = 0.f;
 	bIsRevealing = true;
 
-	if (TotalVisibleChars == 0 || CharactersPerSecond <= 0.f)
+	// The setting is read once per line; turning it off mid-line lets the current line finish typing.
+	if (TotalVisibleChars == 0 || CharactersPerSecond <= 0.f || !GetDefault<UPlayerSettings>()->bDialogueTypewriterEnabled)
 	{
 		CompleteReveal();
 		return;

@@ -55,7 +55,10 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnDialogueChoiceConfirmed(int32 Index);
 
-	/** Fires when the line reveal finishes, both naturally and via SkipReveal. */
+	/**
+	 * Fires when the line reveal finishes, both naturally and via SkipReveal. An instant reveal (typewriter disabled,
+	 * or an empty line) fires it synchronously inside AddDialogueLine, right after DisplayDialogueLine.
+	 */
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnLineRevealCompleted();
 
@@ -71,7 +74,7 @@ protected:
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget), Category = "Dialogue")
 	TObjectPtr<URichTextBlock> DialogueText;
 
-	/** Visible characters revealed per second; <= 0 reveals instantly. */
+	/** Visible characters revealed per second; <= 0 reveals instantly. Ignored while UPlayerSettings::bDialogueTypewriterEnabled is false. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
 	float CharactersPerSecond = 40.f;
 
